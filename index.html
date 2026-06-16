@@ -551,7 +551,7 @@ function updateBuffsUI() {
     if(container) container.innerHTML = html;
 }
 
-let snake,dir,nextDir,foods=[],bonus,score,hi=0,level,speed,running,paused,lastTime,elapsed,particles,trails,flashTimer;
+let snake,dir,nextDir,foods=[],bonus,score,hi=0,level,speed,running,paused,lastTime,elapsed,particles,trails,flashTimer,currentP=0;
 
 const P={
   bg:'#18222c',grid:'rgba(255,255,255,0.025)',
@@ -588,7 +588,7 @@ function init() {
   
   bonus=null;currentPerk=null;score=0;level=1;speed=130;
   running=true;paused=false;particles=[];trails=[];flashTimer=0;
-  lastTime=null;elapsed=0;foodEaten=0;
+  lastTime=null;elapsed=0;foodEaten=0;currentP=0;
   buffs={slow:0,fast:0};hasShield=false;
   updateBuffsUI();
   scoreEl.textContent=0;lvlEl.textContent=1;
@@ -655,6 +655,7 @@ function loop(ts){
     if ((oldSlow > 0 && buffs.slow <= 0) || (oldFast > 0 && buffs.fast <= 0)) {
         updateBuffsUI();
     }
+    currentP = Math.min(1, elapsed / effectiveSpeed);
   }
   render(ts);
 }
@@ -759,26 +760,59 @@ function render(ts){
     ctx.fillStyle=`rgba(29,158,117,${t.life*.3})`;
     ctx.beginPath();ctx.roundRect(t.x*CELL+3,t.y*CELL+3,CELL-6,CELL-6,3);ctx.fill();
   });
-  const N=snake.length;
-  for (let i = N - 1; i >= 0; i--) {
-    const seg = snake[i];
-    const t = i / Math.max(N - 1, 1);
+
+  let p = currentP;
+  let N_s = snake.length;
+  let nextX = snake[0].x + nextDir.x;
+  let nextY = snake[0].y + nextDir.y;
+  
+  if (hasShield) {
+      if (nextX < 0) nextX = COLS - 1;
+      else if (nextX >= COLS) nextX = 0;
+      if (nextY < 0) nextY = ROWS - 1;
+      else if (nextY >= ROWS) nextY = 0;
+  }
+  
+  let willEat = foods.some(f => f.x === nextX && f.y === nextY) ||
+                (currentPerk && currentPerk.x === nextX && currentPerk.y === nextY) ||
+                (bonus && bonus.x === nextX && bonus.y === nextY);
+  
+  let visSnake = [];
+  visSnake.push({ x: snake[0].x + nextDir.x * p, y: snake[0].y + nextDir.y * p });
+  for (let i = 0; i < N_s - 1; i++) {
+      visSnake.push({ x: snake[i].x, y: snake[i].y });
+  }
+  
+  let tailP = willEat ? 0 : p;
+  let tailDx = snake[N_s-2].x - snake[N_s-1].x;
+  let tailDy = snake[N_s-2].y - snake[N_s-1].y;
+  if (Math.abs(tailDx) > 1 || Math.abs(tailDy) > 1) {
+      visSnake.push({ x: snake[N_s-1].x, y: snake[N_s-1].y });
+  } else {
+      visSnake.push({ x: snake[N_s-1].x + tailDx * tailP, y: snake[N_s-1].y + tailDy * tailP });
+  }
+  
+  const vN = visSnake.length;
+  for (let i = vN - 1; i >= 0; i--) {
+    const seg = visSnake[i];
+    const tIndex = Math.max(0, i - 1);
+    const t = tIndex / Math.max(N_s - 1, 1);
     let r, g, b;
     
     if (gameSettings.color === 'red') {
-      if(i===0){r=226;g=75;b=74;}
+      if(tIndex===0){r=226;g=75;b=74;}
       else{r=Math.round(226+(250-226)*t);g=Math.round(75+(150-75)*t);b=Math.round(74+(150-74)*t);}
     } else if (gameSettings.color === 'blue') {
-      if(i===0){r=52;g=152;b=219;}
+      if(tIndex===0){r=52;g=152;b=219;}
       else{r=Math.round(52+(150-52)*t);g=Math.round(152+(220-152)*t);b=Math.round(219+(250-219)*t);}
     } else if (gameSettings.color !== 'rainbow') {
-      if(i===0){r=29;g=158;b=117;}
+      if(tIndex===0){r=29;g=158;b=117;}
       else{r=Math.round(29+(159-29)*t);g=Math.round(158+(225-158)*t);b=Math.round(117+(203-117)*t);}
     }
 
     const snakeThickness = CELL - 4;
     let colorStr = (gameSettings.color === 'rainbow') 
-        ? `hsl(${(ts * 0.1 + i * 15) % 360}, 80%, 50%)`
+        ? `hsl(${(ts * 0.1 + tIndex * 15) % 360}, 80%, 50%)`
         : `rgb(${r},${g},${b})`;
 
     ctx.fillStyle = colorStr;
@@ -804,10 +838,14 @@ function render(ts){
 
     ctx.beginPath();
     if (i > 0) {
-        const prev = snake[i - 1];
+        const prev = visSnake[i - 1];
         const dx = Math.abs(seg.x - prev.x);
         const dy = Math.abs(seg.y - prev.y);
-        if (dx > 1 || dy > 1) {
+        
+        if (dx === 0 && dy === 0) {
+            ctx.arc(cx, cy, snakeThickness / 2, 0, Math.PI * 2);
+            ctx.fill();
+        } else if (dx > 1.5 || dy > 1.5) {
             ctx.arc(cx, cy, snakeThickness / 2, 0, Math.PI * 2);
             ctx.fill();
         } else {
@@ -834,16 +872,17 @@ function render(ts){
 
     if (i === 0) {
       const eo = 4, er = 2.5;
-      const ex1 = cx + dir.y * eo + dir.x * 3, ey1 = cy - dir.x * eo + dir.y * 3;
-      const ex2 = cx - dir.y * eo + dir.x * 3, ey2 = cy + dir.x * eo + dir.y * 3;
+      const ex1 = cx + nextDir.y * eo + nextDir.x * 3, ey1 = cy - nextDir.x * eo + nextDir.y * 3;
+      const ex2 = cx - nextDir.y * eo + nextDir.x * 3, ey2 = cy + nextDir.x * eo + nextDir.y * 3;
       ctx.fillStyle = '#fff';
       ctx.beginPath(); ctx.arc(ex1, ey1, er, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.arc(ex2, ey2, er, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#080c10';
-      ctx.beginPath(); ctx.arc(ex1 + dir.x, ey1 + dir.y, 1.2, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(ex2 + dir.x, ey2 + dir.y, 1.2, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(ex1 + nextDir.x, ey1 + nextDir.y, 1.2, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(ex2 + nextDir.x, ey2 + nextDir.y, 1.2, 0, Math.PI * 2); ctx.fill();
     }
   }
+
   const pulse=Math.sin(ts*.006)*3;
   ctx.shadowColor=P.foodGlow;
   
@@ -942,5 +981,5 @@ cv.addEventListener('touchend',e=>{
 
 startBtn.addEventListener('click',()=>init());
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0c96ef03d8fb541',t:'MTc4MTYwODkxMQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
