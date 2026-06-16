@@ -270,21 +270,35 @@ async function fetchScores() {
 
 async function saveScore(name, score, level) {
   try {
-    await fetch(
-      `${SUPABASE_URL}/rest/v1/scores?on_conflict=name`,
-      {
-        method: 'POST',
-        headers: {
-          ...HEADERS,
-          'Prefer': 'resolution=merge-duplicates'
-        },
-        body: JSON.stringify({
-          name,
-          score,
-          level
-        })
-      }
+    // Aktuellen Eintrag holen
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/scores?name=eq.${encodeURIComponent(name)}`,
+      { headers: HEADERS }
     );
+
+    const existing = await res.json();
+
+    // Falls Spieler noch nicht existiert -> neu anlegen
+    if (!existing.length) {
+      await fetch(`${SUPABASE_URL}/rest/v1/scores`, {
+        method: "POST",
+        headers: HEADERS,
+        body: JSON.stringify({ name, score, level })
+      });
+      return;
+    }
+
+    // Nur aktualisieren wenn neuer Score höher ist
+    if (score > existing[0].score) {
+      await fetch(
+        `${SUPABASE_URL}/rest/v1/scores?name=eq.${encodeURIComponent(name)}`,
+        {
+          method: "PATCH",
+          headers: HEADERS,
+          body: JSON.stringify({ score, level })
+        }
+      );
+    }
   } catch (e) {
     console.error(e);
   }
