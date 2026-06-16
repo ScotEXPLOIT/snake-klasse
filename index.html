@@ -72,6 +72,26 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
   flex-direction:row;align-items:stretch;
   background: radial-gradient(ellipse 60% 40% at 20% 50%, rgba(29,158,117,0.06) 0%, transparent 60%);
 }
+.left-sidebar {
+  width: 240px; flex-shrink: 0;
+  background: var(--surface); border-right: 0.5px solid var(--border);
+  display: flex; flex-direction: column; padding: 1.5rem; gap: 1.25rem;
+  overflow-y: auto;
+}
+.perk-legend {
+  display: flex; flex-direction: column; gap: 8px;
+}
+.pl-item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface2); border: 0.5px solid var(--border);
+  padding: 10px 12px; border-radius: 8px; transition: border-color .2s;
+}
+.pl-item:hover { border-color: rgba(255,255,255,0.2); }
+.pl-icon { font-size: 20px; width: 26px; text-align: center; }
+.pl-info { display: flex; flex-direction: column; gap: 3px; }
+.pl-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.pl-desc { font-size: 11px; color: var(--muted); line-height: 1.3; }
+
 .game-col{
   flex:1;display:flex;flex-direction:column;align-items:center;
   justify-content:center;padding:2rem;gap:1.25rem;
@@ -233,11 +253,17 @@ kbd{
 }
 #settings-btn:hover { background: var(--surface); border-color: var(--green); transform: rotate(45deg); }
 
-@media(max-width:700px){
-  #screen-game{flex-direction:column;}
-  .sidebar{width:100%;border-left:none;border-top:0.5px solid var(--border);max-height:220px;}
+@media(max-width:950px){
+  #screen-game { flex-direction: column; }
+  .game-col { order: 1; padding: 1.5rem 1rem; }
+  .sidebar { order: 2; width: 100%; border-left: none; border-top: 0.5px solid var(--border); max-height: 250px; }
+  .left-sidebar { order: 3; width: 100%; border-right: none; border-top: 0.5px solid var(--border); }
+  .perk-legend { flex-direction: row; flex-wrap: wrap; }
+  .pl-item { flex: 1; min-width: 200px; }
   .rank-list{flex-direction:row;flex-wrap:wrap;overflow-x:auto;}
   .rank-item{min-width:140px;}
+}
+@media(max-width:700px){
   #mobile-btns{display:flex;}
   .controls-hint{display:none;}
 }
@@ -277,6 +303,47 @@ kbd{
 
 <!-- GAME SCREEN -->
 <div id="screen-game" class="screen">
+  <div class="left-sidebar">
+    <div class="sidebar-title">✨ Power-Ups & Items</div>
+    <div class="perk-legend">
+      <div class="pl-item">
+        <div class="pl-icon" style="filter:drop-shadow(0 0 5px #3498db)">🐢</div>
+        <div class="pl-info">
+          <div class="pl-title">Langsamer</div>
+          <div class="pl-desc">Reduziert die Geschwindigkeit</div>
+        </div>
+      </div>
+      <div class="pl-item">
+        <div class="pl-icon" style="filter:drop-shadow(0 0 5px #f1c40f)">⚡</div>
+        <div class="pl-info">
+          <div class="pl-title">Schneller</div>
+          <div class="pl-desc">Erhöht die Geschwindigkeit</div>
+        </div>
+      </div>
+      <div class="pl-item">
+        <div class="pl-icon" style="filter:drop-shadow(0 0 5px #9b59b6)">✂️</div>
+        <div class="pl-info">
+          <div class="pl-title">Schrumpfen</div>
+          <div class="pl-desc">Kürzt die Schlange stark</div>
+        </div>
+      </div>
+      <div class="pl-item">
+        <div class="pl-icon" style="filter:drop-shadow(0 0 5px #bdc3c7)">🛡️</div>
+        <div class="pl-info">
+          <div class="pl-title">Schutzschild</div>
+          <div class="pl-desc">Verhindert 1x Game Over</div>
+        </div>
+      </div>
+      <div class="pl-item">
+        <div class="pl-icon" style="filter:drop-shadow(0 0 5px #EF9F27)">⭐</div>
+        <div class="pl-info">
+          <div class="pl-title">Bonus-Stern</div>
+          <div class="pl-desc">Bringt sofort 25 Punkte</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="game-col">
     <div class="hud">
       <div class="hud-box"><span class="hud-label">Punkte</span><span class="hud-val green" id="score">0</span></div>
@@ -981,5 +1048,5 @@ cv.addEventListener('touchend',e=>{
 
 startBtn.addEventListener('click',()=>init());
 </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0c98f95ea1b0c5a',t:'MTc4MTYxMDI0OA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
