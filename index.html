@@ -92,6 +92,33 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .pl-title { font-size: 13px; font-weight: 600; color: var(--text); }
 .pl-desc { font-size: 11px; color: var(--muted); line-height: 1.3; }
 
+/* MUSIC WIDGET */
+.music-widget {
+  background: var(--surface2); border: 0.5px solid var(--border);
+  border-radius: 8px; padding: 1rem; display: flex; flex-direction: column; gap: 10px;
+}
+.mw-title { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
+.mw-search { display: flex; }
+.mw-search input {
+  flex: 1; background: var(--surface); border: 0.5px solid var(--border);
+  color: var(--text); padding: 8px 10px; border-radius: 6px; font-size: 13px;
+  font-family: var(--sans); outline: none; width: 100%; transition: border-color 0.2s;
+}
+.mw-search input:focus { border-color: var(--green); }
+.mw-player { display: none; align-items: center; gap: 10px; margin-top: 2px; }
+.mw-player.active { display: flex; }
+.mw-cover { width: 36px; height: 36px; border-radius: 6px; background: #000; object-fit: cover; }
+.mw-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+.mw-song { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+.mw-artist { font-size: 10px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mw-ctrl {
+  background: var(--green); border: none; width: 30px; height: 30px; border-radius: 50%;
+  color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; transition: background 0.15s, transform 0.1s; flex-shrink: 0;
+}
+.mw-ctrl:hover { background: #0F6E56; transform: scale(1.05); }
+.mw-ctrl:active { transform: scale(0.95); }
+
 .game-col{
   flex:1;display:flex;flex-direction:column;align-items:center;
   justify-content:center;padding:2rem;gap:1.25rem;
@@ -342,6 +369,22 @@ kbd{
         </div>
       </div>
     </div>
+    
+    <div class="music-widget">
+      <div class="mw-title">🎵 Musik-Player (Vorschau)</div>
+      <div class="mw-search">
+        <input type="text" id="music-input" placeholder="Song eingeben & Enter..." autocomplete="off">
+      </div>
+      <div class="mw-player" id="mw-player">
+        <img id="mw-cover" class="mw-cover" src="" alt="Cover">
+        <div class="mw-info">
+          <div class="mw-song" id="mw-song">Lädt...</div>
+          <div class="mw-artist" id="mw-artist"></div>
+        </div>
+        <button class="mw-ctrl" id="mw-play">⏸</button>
+      </div>
+      <audio id="mw-audio" style="display:none;"></audio>
+    </div>
   </div>
 
   <div class="game-col">
@@ -504,6 +547,67 @@ function showToastMsg(msg) {
   t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'), 2500);
 }
+
+// ── MUSIC WIDGET ──
+const mInput = document.getElementById('music-input');
+const mPlayer = document.getElementById('mw-player');
+const mCover = document.getElementById('mw-cover');
+const mSong = document.getElementById('mw-song');
+const mArtist = document.getElementById('mw-artist');
+const mAudio = document.getElementById('mw-audio');
+const mPlayBtn = document.getElementById('mw-play');
+
+// Verhindert, dass die Pfeiltasten beim Tippen im Suchfeld die Schlange bewegen
+mInput.addEventListener('keydown', async (e) => {
+  e.stopPropagation();
+  if (e.key === 'Enter') {
+    const q = mInput.value.trim();
+    if (!q) return;
+    
+    mSong.textContent = "Sucht...";
+    mArtist.textContent = "";
+    mCover.src = "";
+    mPlayer.classList.add('active');
+    
+    try {
+      const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&entity=song&limit=1`);
+      const data = await res.json();
+      
+      if (data.results && data.results.length > 0) {
+        const track = data.results[0];
+        mCover.src = track.artworkUrl100 || '';
+        mSong.textContent = track.trackName;
+        mArtist.textContent = track.artistName;
+        mAudio.src = track.previewUrl;
+        
+        mAudio.volume = 0.25; 
+        mAudio.play();
+        mPlayBtn.textContent = '⏸';
+      } else {
+        mSong.textContent = "Nicht gefunden";
+        mArtist.textContent = "";
+        mPlayBtn.textContent = '▶';
+      }
+    } catch(err) {
+      mSong.textContent = "Fehler";
+      mPlayBtn.textContent = '▶';
+    }
+  }
+});
+
+mPlayBtn.addEventListener('click', () => {
+  if(mAudio.paused && mAudio.src) {
+    mAudio.play();
+    mPlayBtn.textContent = '⏸';
+  } else {
+    mAudio.pause();
+    mPlayBtn.textContent = '▶';
+  }
+});
+
+mAudio.addEventListener('ended', () => {
+  mPlayBtn.textContent = '▶';
+});
 
 // ── NAME SCREEN ──
 const nameInput = document.getElementById('name-input');
@@ -1048,5 +1152,5 @@ cv.addEventListener('touchend',e=>{
 
 startBtn.addEventListener('click',()=>init());
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0c98f95ea1b0c5a',t:'MTc4MTYxMDI0OA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0c99919a854170e',t:'MTc4MTYxMDYzOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
