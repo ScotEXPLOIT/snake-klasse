@@ -106,7 +106,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
   border:0.5px solid rgba(29,158,117,0.25);
   box-shadow:0 0 0 1px rgba(29,158,117,0.1), 0 0 60px rgba(0,0,0,0.6);
 }
-canvas{display:block;}
+canvas{
+  display:block;
+  max-width:100%;
+  height:auto;
+}
 
 #overlay{
   position:absolute;inset:0;display:flex;flex-direction:column;
