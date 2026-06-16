@@ -270,19 +270,24 @@ async function fetchScores() {
 
 async function saveScore(name, score, level) {
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/scores`, {
-      method: 'POST',
-      headers: {
-        ...HEADERS,
-        'Prefer': 'resolution=merge-duplicates'
-      },
-      body: JSON.stringify({
-        name,
-        score,
-        level
-      })
-    });
-  } catch {}
+    await fetch(
+      `${SUPABASE_URL}/rest/v1/scores?on_conflict=name`,
+      {
+        method: 'POST',
+        headers: {
+          ...HEADERS,
+          'Prefer': 'resolution=merge-duplicates'
+        },
+        body: JSON.stringify({
+          name,
+          score,
+          level
+        })
+      }
+    );
+  } catch (e) {
+    console.error(e);
+  }
 }
 
 function renderRankList(el, scores, myName) {
