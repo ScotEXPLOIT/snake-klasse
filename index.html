@@ -256,6 +256,11 @@ kbd{
 .sc-red .skin-dot { background: #e24b4a; }
 .sc-blue .skin-dot { background: #3498db; }
 .sc-rainbow .skin-dot { background: linear-gradient(90deg, #ff4b4b, #f1c40f, #2ecc71, #3498db); }
+.sc-gold .skin-dot { background: #f1c40f; }
+.sc-devil .skin-dot { background: #c0392b; }
+.sc-cat .skin-dot { background: #e67e22; }
+.sc-ninja .skin-dot { background: #2c3e50; }
+.sc-ghost .skin-dot { background: rgba(236,240,241,0.6); }
 .skin-label { font-size: 11px; font-weight: 500; }
 
 .btn-group { display: flex; gap: 8px; margin-top: 5px; }
@@ -370,8 +375,9 @@ kbd{
       </div>
     </div>
     
+<!-- MUSIC WIDGET -->
     <div class="music-widget">
-      <div class="mw-title">🎵 Musik-Player (Vorschau)</div>
+      <div class="mw-title">🎵 Musik-Player</div>
       <div class="mw-search">
         <input type="text" id="music-input" placeholder="Song eingeben & Enter..." autocomplete="off">
       </div>
@@ -383,6 +389,7 @@ kbd{
         </div>
         <button class="mw-ctrl" id="mw-play">▶</button>
       </div>
+      <audio id="mw-audio" style="display:none;" loop></audio>
     </div>
   </div>
 
@@ -429,14 +436,12 @@ kbd{
 
 <div id="toast">✓ Score gespeichert!</div>
 
-<div id="yt-player" style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;"></div>
-
 <div id="settings-modal" class="modal">
   <div class="modal-content">
     <div class="modal-title">EINSTELLUNGEN</div>
     <div class="settings-group">
       <label>Farbe / Muster</label>
-      <div class="skin-options" id="set-color">
+      <div class="skin-options" id="set-color" style="max-height: 220px; overflow-y: auto;">
         <div class="skin-card sc-classic active" data-val="classic">
           <div class="skin-preview">
             <div class="skin-dot head"></div><div class="skin-dot"></div><div class="skin-dot"></div>
@@ -461,6 +466,36 @@ kbd{
           </div>
           <div class="skin-label">Regenbogen</div>
         </div>
+        <div class="skin-card sc-gold" data-val="gold">
+          <div class="skin-preview">
+            <div class="skin-dot head"></div><div class="skin-dot"></div><div class="skin-dot"></div>
+          </div>
+          <div class="skin-label">König</div>
+        </div>
+        <div class="skin-card sc-devil" data-val="devil">
+          <div class="skin-preview">
+            <div class="skin-dot head"></div><div class="skin-dot"></div><div class="skin-dot"></div>
+          </div>
+          <div class="skin-label">Teufel</div>
+        </div>
+        <div class="skin-card sc-cat" data-val="cat">
+          <div class="skin-preview">
+            <div class="skin-dot head"></div><div class="skin-dot"></div><div class="skin-dot"></div>
+          </div>
+          <div class="skin-label">Katze</div>
+        </div>
+        <div class="skin-card sc-ninja" data-val="ninja">
+          <div class="skin-preview">
+            <div class="skin-dot head"></div><div class="skin-dot"></div><div class="skin-dot"></div>
+          </div>
+          <div class="skin-label">Ninja</div>
+        </div>
+        <div class="skin-card sc-ghost" data-val="ghost">
+          <div class="skin-preview">
+            <div class="skin-dot head"></div><div class="skin-dot"></div><div class="skin-dot"></div>
+          </div>
+          <div class="skin-label">Geist</div>
+        </div>
       </div>
     </div>
     <div class="settings-group">
@@ -483,7 +518,6 @@ kbd{
   </div>
 </div>
 
-<script src="https://www.youtube.com/iframe_api"></script>
 <script>
 const SUPABASE_URL = 'https://rwrkhidvkfwpmygpbjxf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ3cmtoaWR2a2Z3cG15Z3BianhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1NzA2NjYsImV4cCI6MjA5NzE0NjY2Nn0.J0prTPHi4wPlwmNc2bwWEzJsBWQQX-HFnZOsLza9V3k';
@@ -550,6 +584,40 @@ function showToastMsg(msg) {
   setTimeout(()=>t.classList.remove('show'), 2500);
 }
 
+// ── SYNTH SOUND EFFECTS ──
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playSound(type) {
+  if(audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  const now = audioCtx.currentTime;
+  
+  if (type === 'eat') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(800, now);
+    osc.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
+    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+    osc.start(now); osc.stop(now + 0.1);
+  } else if (type === 'bonus') {
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(400, now);
+    osc.frequency.setValueAtTime(600, now + 0.1);
+    osc.frequency.setValueAtTime(800, now + 0.2);
+    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.3);
+    osc.start(now); osc.stop(now + 0.3);
+  } else if (type === 'die') {
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(150, now);
+    osc.frequency.exponentialRampToValueAtTime(40, now + 0.5);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+    osc.start(now); osc.stop(now + 0.5);
+  }
+}
+
 // ── MUSIC WIDGET ──
 const mInput = document.getElementById('music-input');
 const mPlayer = document.getElementById('mw-player');
@@ -557,23 +625,10 @@ const mCover = document.getElementById('mw-cover');
 const mSong = document.getElementById('mw-song');
 const mArtist = document.getElementById('mw-artist');
 const mPlayBtn = document.getElementById('mw-play');
+const mAudio = document.getElementById('mw-audio');
 
-let ytPlayer = null;
-let isYtPlaying = false;
+let isMusicPlaying = false;
 let themeColor = { r: 29, g: 158, b: 117 };
-
-function onYouTubeIframeAPIReady() {
-  ytPlayer = new YT.Player('yt-player', {
-    height: '1', width: '1',
-    playerVars: { 'autoplay': 1, 'controls': 0 },
-    events: {
-      'onStateChange': e => {
-        isYtPlaying = (e.data === YT.PlayerState.PLAYING);
-        mPlayBtn.textContent = isYtPlaying ? '⏸' : '▶';
-      }
-    }
-  });
-}
 
 function extractColor(url) {
   const img = new Image();
@@ -606,8 +661,8 @@ let bgParticles = Array.from({length: 60}, () => ({
 function bgLoop(ts) {
   requestAnimationFrame(bgLoop);
   bgCtx.clearRect(0,0,bgW,bgH);
-  let beat = isYtPlaying ? 1 + Math.sin(ts*0.008)*0.4 : 1;
-  let spd = isYtPlaying ? 3 : 0.4;
+  let beat = isMusicPlaying ? 1 + Math.sin(ts*0.008)*0.4 : 1;
+  let spd = isMusicPlaying ? 3 : 0.4;
   
   bgParticles.forEach(p => {
     p.x += p.vx * spd; p.y += p.vy * spd;
@@ -622,7 +677,7 @@ function bgLoop(ts) {
   
   const wrap = document.getElementById('canvas-wrap');
   if(wrap) {
-      wrap.style.boxShadow = `0 0 0 1px rgba(${themeColor.r},${themeColor.g},${themeColor.b},0.2), 0 0 ${isYtPlaying ? 80+beat*20 : 60}px rgba(${themeColor.r},${themeColor.g},${themeColor.b},${isYtPlaying ? 0.35 : 0.15})`;
+      wrap.style.boxShadow = `0 0 0 1px rgba(${themeColor.r},${themeColor.g},${themeColor.b},0.2), 0 0 ${isMusicPlaying ? 80+beat*20 : 60}px rgba(${themeColor.r},${themeColor.g},${themeColor.b},${isMusicPlaying ? 0.35 : 0.15})`;
   }
 }
 requestAnimationFrame(bgLoop);
@@ -649,14 +704,12 @@ mInput.addEventListener('keydown', async (e) => {
         
         mSong.textContent = track.trackName;
         mArtist.textContent = track.artistName;
+        mAudio.src = track.previewUrl;
         
-        if (ytPlayer && ytPlayer.loadPlaylist) {
-            ytPlayer.loadPlaylist({
-                listType: 'search',
-                list: track.trackName + ' ' + track.artistName + ' audio'
-            });
-            ytPlayer.setVolume(30);
-        }
+        mAudio.volume = 0.25; 
+        mAudio.play();
+        isMusicPlaying = true;
+        mPlayBtn.textContent = '⏸';
       } else {
         mSong.textContent = "Nicht gefunden";
       }
@@ -667,9 +720,15 @@ mInput.addEventListener('keydown', async (e) => {
 });
 
 mPlayBtn.addEventListener('click', () => {
-  if(!ytPlayer) return;
-  if(isYtPlaying) ytPlayer.pauseVideo();
-  else ytPlayer.playVideo();
+  if(mAudio.paused && mAudio.src) {
+    mAudio.play();
+    isMusicPlaying = true;
+    mPlayBtn.textContent = '⏸';
+  } else {
+    mAudio.pause();
+    isMusicPlaying = false;
+    mPlayBtn.textContent = '▶';
+  }
 });
 
 // ── NAME SCREEN ──
@@ -785,7 +844,7 @@ function updateBuffsUI() {
     if(container) container.innerHTML = html;
 }
 
-let snake,dir,nextDir,foods=[],bonus,score,hi=0,level,speed,running,paused,lastTime,elapsed,particles,trails,flashTimer,currentP=0,inputQueue=[],lastTail=null,hasStarted=false,justAte=false;
+let snake,dir,nextDir,foods=[],bonus,score,hi=0,level,speed,running,paused,lastTime,elapsed,particles,trails,flashTimer,currentP=0,inputQueue=[],lastTail=null,hasStarted=false,justAte=false,floatingTexts=[],screenShake=0;
 
 const P={
   bg:'#18222c',grid:'rgba(255,255,255,0.025)',
@@ -825,7 +884,7 @@ function init() {
   bonus=null;currentPerk=null;score=0;level=1;speed=90;
   running=true;paused=false;particles=[];trails=[];flashTimer=0;
   lastTime=null;elapsed=0;foodEaten=0;currentP=0;
-  buffs={slow:0,fast:0};hasShield=false;justAte=false;
+  buffs={slow:0,fast:0};hasShield=false;justAte=false;floatingTexts=[];screenShake=0;
   updateBuffsUI();
   lastTail=null;
   scoreEl.textContent=0;lvlEl.textContent=1;
@@ -912,6 +971,8 @@ function tick(){
 
   if (hitWall || hitSelf) {
     if (hasShield) {
+      playSound('bonus');
+      screenShake = 12;
       hasShield = false;
       showToastMsg("🛡️ Schutz verbraucht!");
       updateBuffsUI();
@@ -947,6 +1008,8 @@ function tick(){
   if(eatenFoodIdx !== -1){
     let f = foods[eatenFoodIdx];
     score+=level*10;ate=true;foodEaten++;
+    playSound('eat');
+    floatingTexts.push({x: f.x*CELL, y: f.y*CELL, text: "+10", life: 1, color: '#E24B4A'});
     spawnParticles(f.x,f.y,P.food,12);flashTimer=120;
     
     foods.splice(eatenFoodIdx, 1);
@@ -962,12 +1025,17 @@ function tick(){
   }
   if(bonus&&head.x===bonus.x&&head.y===bonus.y){
     score+=level*25;ate=true;
+    playSound('bonus');
+    screenShake = 8;
+    floatingTexts.push({x: bonus.x*CELL, y: bonus.y*CELL, text: "+25", life: 1, color: '#EF9F27'});
     spawnParticles(bonus.x,bonus.y,P.bonus,16);bonus=null;
     scoreEl.textContent=score;
     if(score>hi){hi=score;hiEl.textContent=hi;}
   }
   if(currentPerk&&head.x===currentPerk.x&&head.y===currentPerk.y){
     ate=true;
+    playSound('bonus');
+    floatingTexts.push({x: currentPerk.x*CELL, y: currentPerk.y*CELL, text: "Perk!", life: 1, color: currentPerk.type.color});
     spawnParticles(currentPerk.x,currentPerk.y,currentPerk.type.color,16);
     applyPerk(currentPerk.type.id);
     showToastMsg(currentPerk.type.icon + " " + currentPerk.type.name);
@@ -982,6 +1050,8 @@ function tick(){
 
 async function die(){
   running=false;
+  playSound('die');
+  screenShake = 15;
   spawnParticles(snake[0].x,snake[0].y,'#E24B4A',20);
   if(score>0){
     await saveScore(playerName,score,level);
@@ -1034,6 +1104,11 @@ function render(ts){
   if (gameSettings.color === 'red') { colorStr = '#e24b4a'; headGlow = 'rgba(226,75,74,0.4)'; }
   else if (gameSettings.color === 'blue') { colorStr = '#3498db'; headGlow = 'rgba(52,152,219,0.4)'; }
   else if (gameSettings.color === 'rainbow') { colorStr = `hsl(${(ts * 0.1) % 360}, 80%, 50%)`; headGlow = `hsla(${(ts * 0.1) % 360}, 80%, 50%, 0.5)`; }
+  else if (gameSettings.color === 'gold') { colorStr = '#f1c40f'; headGlow = 'rgba(241,196,15,0.4)'; }
+  else if (gameSettings.color === 'devil') { colorStr = '#c0392b'; headGlow = 'rgba(192,57,43,0.4)'; }
+  else if (gameSettings.color === 'cat') { colorStr = '#e67e22'; headGlow = 'rgba(230,126,34,0.4)'; }
+  else if (gameSettings.color === 'ninja') { colorStr = '#2c3e50'; headGlow = 'rgba(44,62,80,0.4)'; }
+  else if (gameSettings.color === 'ghost') { colorStr = 'rgba(236,240,241,0.6)'; headGlow = 'rgba(236,240,241,0.3)'; }
 
   ctx.strokeStyle = colorStr;
   ctx.lineWidth = snakeThickness;
@@ -1080,9 +1155,83 @@ function render(ts){
       ctx.arc(cx, cy, snakeThickness / 2 + 2, 0, Math.PI * 2);
       ctx.stroke();
   }
+  
+  let eyeDir = dir;
+  if (inputQueue.length > 0) eyeDir = inputQueue[0];
+  else if (hasStarted) eyeDir = nextDir;
+  let vx = eyeDir.x, vy = eyeDir.y;
+  let rx = -vy, ry = vx;
+
+  if (gameSettings.color === 'devil') {
+      ctx.fillStyle = '#922b21';
+      ctx.beginPath();
+      let lx = cx - vx*2 + rx*4, ly = cy - vy*2 + ry*4;
+      ctx.moveTo(lx, ly);
+      ctx.lineTo(lx - vx*6 + rx*5, ly - vy*6 + ry*5);
+      ctx.lineTo(lx - vx*4 - rx*1, ly - vy*4 - ry*1);
+      ctx.fill();
+      ctx.beginPath();
+      let rx_ = cx - vx*2 - rx*4, ry_ = cy - vy*2 - ry*4;
+      ctx.moveTo(rx_, ry_);
+      ctx.lineTo(rx_ - vx*6 - rx*5, ry_ - vy*6 - ry*5);
+      ctx.lineTo(rx_ - vx*4 + rx*1, ry_ - vy*4 + ry*1);
+      ctx.fill();
+  } else if (gameSettings.color === 'cat') {
+      ctx.fillStyle = colorStr;
+      ctx.beginPath();
+      let lx = cx - vx*1 + rx*4, ly = cy - vy*1 + ry*4;
+      ctx.moveTo(lx, ly);
+      ctx.lineTo(lx - vx*6 + rx*3, ly - vy*6 + ry*3);
+      ctx.lineTo(lx - vx*3 - rx*2, ly - vy*3 - ry*2);
+      ctx.fill();
+      ctx.beginPath();
+      let rx_ = cx - vx*1 - rx*4, ry_ = cy - vy*1 - ry*4;
+      ctx.moveTo(rx_, ry_);
+      ctx.lineTo(rx_ - vx*6 - rx*3, ry_ - vy*6 - ry*3);
+      ctx.lineTo(rx_ - vx*3 + rx*2, ry_ - vy*3 + ry*2);
+      ctx.fill();
+      ctx.fillStyle = '#e74c3c';
+      ctx.beginPath();
+      ctx.moveTo(lx - vx*1, ly - vy*1);
+      ctx.lineTo(lx - vx*4 + rx*2, ly - vy*4 + ry*2);
+      ctx.lineTo(lx - vx*2 - rx*1, ly - vy*2 - ry*1);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(rx_ - vx*1, ry_ - vy*1);
+      ctx.lineTo(rx_ - vx*4 - rx*2, ry_ - vy*4 - ry*2);
+      ctx.lineTo(rx_ - vx*2 + rx*1, ry_ - vy*2 + ry*1);
+      ctx.fill();
+  } else if (gameSettings.color === 'gold') {
+      ctx.fillStyle = '#f39c12';
+      ctx.beginPath();
+      let bx = cx - vx*2, by = cy - vy*2;
+      ctx.moveTo(bx + rx*4, by + ry*4);
+      ctx.lineTo(bx - rx*4, by - ry*4);
+      ctx.lineTo(bx - rx*5 - vx*4, by - ry*5 - vy*4);
+      ctx.lineTo(bx - rx*2 - vx*2, by - ry*2 - vy*2);
+      ctx.lineTo(bx - vx*5, by - vy*5);
+      ctx.lineTo(bx + rx*2 - vx*2, by + ry*2 - vy*2);
+      ctx.lineTo(bx + rx*5 - vx*4, by + ry*5 - vy*4);
+      ctx.fill();
+  } else if (gameSettings.color === 'ninja') {
+      ctx.strokeStyle = '#e74c3c';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(cx + rx*6 + vx*2, cy + ry*6 + vy*2);
+      ctx.lineTo(cx - rx*6 + vx*2, cy - ry*6 + vy*2);
+      ctx.stroke();
+      ctx.fillStyle = '#e74c3c';
+      ctx.beginPath();
+      ctx.arc(cx - vx*6 + rx*5, cy - vy*6 + ry*5, 2.5, 0, Math.PI*2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(cx - vx*6 + rx*5, cy - vy*6 + ry*5);
+      ctx.lineTo(cx - vx*10 + rx*6, cy - vy*10 + ry*6);
+      ctx.lineTo(cx - vx*9 + rx*4, cy - vy*9 + ry*4);
+      ctx.fill();
+  }
 
   // Eyes
-  let eyeDir = dir;
   let eo = 4, er = 2.5;
   let ex1 = cx + eyeDir.y * eo + eyeDir.x * 3;
   let ey1 = cy - eyeDir.x * eo + eyeDir.y * 3;
@@ -1097,6 +1246,14 @@ function render(ts){
   ctx.beginPath(); ctx.arc(ex2 + eyeDir.x, ey2 + eyeDir.y, 1.2, 0, Math.PI * 2); ctx.fill();
 
   const pulse=Math.sin(ts*.006)*3;
+  
+  if (screenShake > 0) {
+      document.getElementById('canvas-wrap').style.transform = `translate(${(Math.random()-.5)*screenShake}px, ${(Math.random()-.5)*screenShake}px)`;
+      screenShake *= 0.9;
+      if(screenShake < 0.5) screenShake = 0;
+  } else {
+      document.getElementById('canvas-wrap').style.transform = 'translate(0,0)';
+  }
   ctx.shadowColor=P.foodGlow;
   
   foods.forEach(f => {
@@ -1153,6 +1310,17 @@ function render(ts){
     ctx.globalAlpha=p.life;ctx.fillStyle=p.color;
     ctx.beginPath();ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);ctx.fill();
   });
+  
+  floatingTexts.forEach(ft => {
+      ctx.fillStyle = ft.color;
+      ctx.globalAlpha = ft.life;
+      ctx.font = '700 16px Space Mono, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(ft.text, ft.x + CELL/2, ft.y + CELL/2 - (1 - ft.life) * 30);
+      ft.life -= 0.025;
+  });
+  floatingTexts = floatingTexts.filter(ft => ft.life > 0);
+  
   ctx.globalAlpha=1;
   if(flashTimer>0){ctx.fillStyle=`rgba(255,255,255,${(flashTimer/120)*.08})`;ctx.fillRect(0,0,W,H);}
   
@@ -1275,5 +1443,5 @@ cv.addEventListener('touchend',e=>{
 
 startBtn.addEventListener('click',()=>init());
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0c9db37a8acdc05',t:'MTc4MTYxMzM0Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0c9f2bf99ed3ecf',t:'MTc4MTYxNDMxMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
