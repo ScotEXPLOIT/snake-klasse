@@ -1114,7 +1114,7 @@ const previewList = document.getElementById('preview-list');
 let playerName = '';
 let isLoginMode = true;
 
-const BAD_SUBSTRINGS = ['hure','hurensohn','hurentochter','fotz','wichs','wixx','wixer','wichser','nutt','schlamp','fick','gefickt','ficker','ficksau','arschloch','arschgesicht','arschgeige','arschkriecher','scheiss','scheiß','kack','piss','pisser','spast','spasti','missgeburt','fehlgeburt','bastard','drecksau','dreckschwein','drecksack','miststück','miststueck','vollidiot','vollpfosten','vollhorst','schwachkopf','hirnlos','hirnamputiert','verrecke','verreck','abschaum','untermensch','ekelhaftes','opfer','mongo','mongoloid','behindert','krueppel','krüppel','schwanzlutscher','schwanz','blasen','lutscher','nutte','hurenkind','huso','huansohn','huan','mistsau','bums','bumser','bumsen','vögel','voegel','nigg','neger','kanak','zigeun','judensau','hitler','nazi','nazischwein','heilhitler','heil hitler','ss-mann','fascho','faschist','ausländerpack','auslaenderpack','fuck','fucker','motherfuck','bitch','cunt','whore','slut','bastard','asshole','dickhead','shithead','dipshit','bullshit','dumbass','jackass','piss','pussy','cocksuck','cockhead','twat','wanker','retard','fagg','nigger','nigga','kys','kill yourself'];
+const BAD_SUBSTRINGS = ['hure','hurensohn','hurentochter','fotz','wichs','wixx','wixer','wichser','nutt','schlamp','fick','gefickt','ficker','ficksau','arschloch','arschgesicht','arschgeige','arschkriecher','scheiss','scheiß','kack','piss','pisser','spast','spasti','missgeburt','fehlgeburt','bastard','drecksau','dreckschwein','drecksack','miststück','miststueck','vollidiot','vollpfosten','vollhorst','schwachkopf','hirnlos','hirnamputiert','verrecke','verreck','abschaum','untermensch','ekelhaftes','opfer','mongo','mongoloid','behindert','krueppel','krüppel','schwanzlutscher','schwanz','blasen','lutscher','nutte','hurenkind','huso','huansohn','huan','mistsau','bums','bumser','bumsen','vögel','voegel','nigg','neger','kanak','zigeun','judensau','hitler','nazi','nazischwein','heilhitler','heil hitler','ss-mann','fascho','faschist','ausländerpack','auslaenderpack','fuck','fucker','motherfuck','bitch','cunt','whore','slut','bastard','asshole','dickhead','shithead','dipshit','bullshit','dumbass','jackass','piss','pussy','cocksuck','cockhead','twat','wanker','retard','fagg','nigger','nigga','kys','kill yourself','nick','penis','vagina','sex','porno','porn','sperma','titten','boobs','boob','muschi','möse','moese','blowjob'];
 
 const BAD_EXACT_WORDS = ['arsch','scheiße','scheisse','shit','kacke','kack','mist','dreck','idiot','depp','trottel','moron','penner','versager','loser','opfer','pfosten','horst','blödmann','bloedmann','blöd','bloed','dummkopf','dumm','sau','schwein','ratte','ekel','pack','slut','whore','dick','cock','pussy','faggot','retard','hoe','ass','asshole','bitch','cunt','prick','twat','wanker','moron','idiot','jerk','loser','scum','trash','garbage'];
 
@@ -1604,21 +1604,37 @@ function startGame() {
 
 async function refreshRank() {
   rankStatus.innerHTML = '<span class="loading-dot"></span> Aktualisiere…';
+  
+  if (playerName) {
+      try {
+          const uCheck = await fetch(`${SUPABASE_URL}/rest/v1/snake_users?username=eq.${encodeURIComponent(playerName)}&select=username`, {headers: HEADERS});
+          const uData = await uCheck.json();
+          if (!uCheck.ok || uData.length === 0) {
+              window.location.reload();
+              return;
+          }
+          
+          const sCheck = await fetch(`${SUPABASE_URL}/rest/v1/scores?name=eq.${encodeURIComponent(playerName)}`, {headers: HEADERS});
+          const sData = await sCheck.json();
+          if(sData.length > 0) {
+              const myData = sData[0];
+              if (myData.coins !== undefined) {
+                  if (myData.coins > playerCoins) {
+                      showToastMsg(`💰 Du hast ${myData.coins - playerCoins} Münzen erhalten!`);
+                  }
+                  playerCoins = myData.coins;
+                  const coinEl = document.getElementById('sidebar-coins');
+                  if(coinEl) coinEl.textContent = `🪙 ${playerCoins}`;
+                  const shopCoinEl = document.getElementById('shop-coins-display');
+                  if(shopCoinEl) shopCoinEl.textContent = `🪙 ${playerCoins}`;
+              }
+          }
+      } catch(e) {}
+  }
+
   const scores = await fetchScores();
   allScores = scores;
   
-  const myData = scores.find(s => s.name === playerName);
-  if (myData && myData.coins !== undefined) {
-      if (myData.coins > playerCoins) {
-         showToastMsg(`💰 Du hast ${myData.coins - playerCoins} Münzen erhalten!`);
-      }
-      playerCoins = myData.coins;
-      const coinEl = document.getElementById('sidebar-coins');
-      if(coinEl) coinEl.textContent = `🪙 ${playerCoins}`;
-      const shopCoinEl = document.getElementById('shop-coins-display');
-      if(shopCoinEl) shopCoinEl.textContent = `🪙 ${playerCoins}`;
-  }
-
   updateNemesis();
   renderRankList(rankList, scores, playerName);
   const upd = new Date().toLocaleTimeString('de',{hour:'2-digit',minute:'2-digit'});
@@ -1915,10 +1931,10 @@ function render(ts){
           }
       }
   } else if (gameSettings.board === 'desert') {
-      ctx.fillStyle = '#e67e22'; ctx.fillRect(0,0,W,H);
+      ctx.fillStyle = '#eed690'; ctx.fillRect(0,0,W,H);
       for(let x=0;x<COLS;x++)for(let y=0;y<ROWS;y++){
           if((x+y)%2 === 0) {
-              ctx.fillStyle = '#f39c12';
+              ctx.fillStyle = '#e4ca7d';
               ctx.fillRect(x*CELL, y*CELL, CELL, CELL);
           }
       }
@@ -2046,12 +2062,17 @@ function render(ts){
       const r = 6.5 + pulse*.2;
       
       ctx.shadowBlur = 14 + pulse;
+      ctx.shadowColor = 'rgba(0,0,0,0.5)';
       ctx.fillStyle = P.food;
       
       ctx.beginPath();
       ctx.ellipse(cx, cy, r + 0.5, r, 0, 0, Math.PI*2);
       ctx.fill();
       ctx.shadowBlur = 0;
+      
+      ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
       
       ctx.fillStyle = 'rgba(255,255,255,0.3)';
       ctx.beginPath();
