@@ -1211,6 +1211,7 @@ function finishLogin(user) {
         .then(r => r.json())
         .then(d => {
             if(d.length > 0) {
+                playerAvatar = d[0].avatar || '🤖';
                 playerCoins = d[0].coins || 0;
                 playerTrophies = d[0].trophies || 0;
                 playerEffect = d[0].effect || '';
@@ -1222,6 +1223,7 @@ function finishLogin(user) {
                 hiEl.textContent = hi;
                 document.getElementById('sidebar-coins').textContent = `🪙 ${playerCoins}`;
                 document.getElementById('sidebar-name').className = `player-name-tag ${playerEffect}`;
+                document.getElementById('sidebar-avatar').innerHTML = renderAvatar(playerAvatar);
             }
         });
 
