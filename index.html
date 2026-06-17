@@ -55,6 +55,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 }
 .name-card input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(29,158,117,0.15);}
 .name-card input::placeholder{color:rgba(255,255,255,0.2);}
+.auth-tabs { display: flex; gap: 10px; margin-bottom: 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+.auth-tab { flex: 1; background: transparent; border: none; color: var(--muted); font-size: 14px; font-weight: 600; font-family: var(--sans); cursor: pointer; transition: color 0.2s; padding: 5px; outline: none; }
+.auth-tab:hover { color: var(--text); }
+.auth-tab.active { color: var(--green); border-bottom: 2px solid var(--green); margin-bottom: -11px; }
 .btn-primary{
   background:var(--green);color:#fff;border:none;border-radius:8px;
   padding:13px;font-size:16px;font-weight:600;font-family:var(--sans);
@@ -317,10 +321,21 @@ kbd{
   <button id="settings-btn" title="Einstellungen">⚙️</button>
   <div class="logo">SN<span>A</span>KE</div>
   <div class="tagline">Klassenrangliste · Wer schafft den Highscore?</div>
-  <div class="name-card">
-    <label for="name-input">Dein Name</label>
-    <input id="name-input" type="text" placeholder="z.B. Max Mustermann" maxlength="20" autocomplete="off" autocorrect="off" spellcheck="false">
-    <button class="btn-primary" id="name-btn" disabled>Los geht's →</button>
+  <div class="name-card" style="gap: 1.25rem;">
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login">Einloggen</button>
+      <button class="auth-tab" id="tab-register">Account erstellen</button>
+    </div>
+    <div class="settings-group" style="margin-bottom:0;">
+        <label>Benutzername</label>
+        <input id="auth-username" type="text" placeholder="Dein Name" maxlength="20" autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+    <div class="settings-group" style="margin-bottom:0;">
+        <label>Passwort</label>
+        <input id="auth-password" type="password" placeholder="••••••••">
+    </div>
+    <div id="auth-error" style="color:var(--red); font-size:13px; display:none; text-align:center; font-weight:500;">Fehler!</div>
+    <button class="btn-primary" id="auth-btn" disabled>Einloggen →</button>
   </div>
   <div class="leaderboard-preview">
     <div class="preview-title">Aktuelle Rangliste</div>
@@ -712,17 +727,93 @@ mPlayBtn.addEventListener('click', () => {
   }
 });
 
-// ── NAME SCREEN ──
-const nameInput = document.getElementById('name-input');
-const nameBtn = document.getElementById('name-btn');
+// ── AUTH SCREEN ──
+const authUser = document.getElementById('auth-username');
+const authPass = document.getElementById('auth-password');
+const authBtn = document.getElementById('auth-btn');
+const authError = document.getElementById('auth-error');
+const tabLogin = document.getElementById('tab-login');
+const tabRegister = document.getElementById('tab-register');
 const previewList = document.getElementById('preview-list');
 let playerName = '';
+let isLoginMode = true;
 
-nameInput.addEventListener('input', () => {
-  nameBtn.disabled = nameInput.value.trim().length < 2;
+const BAD_WORDS = ['arsch','hurensohn','fotze','wichser','nutte','schlampe','bastard','missgeburt','spast','fick','fuck','shit','bitch','cunt','asshole','slut','whore','dick','cock','pussy','faggot','nigger','nigga','retard','hitler','nazi'];
+
+function checkProfanity(name) {
+  const lower = name.toLowerCase();
+  return BAD_WORDS.some(bw => lower.includes(bw));
+}
+
+tabLogin.addEventListener('click', () => {
+    isLoginMode = true;
+    tabLogin.classList.add('active'); tabRegister.classList.remove('active');
+    authBtn.textContent = "Einloggen →";
+    authError.style.display = 'none';
+    validateAuthInput();
 });
-nameInput.addEventListener('keydown', e => { if(e.key==='Enter' && !nameBtn.disabled) startGame(); });
-nameBtn.addEventListener('click', startGame);
+tabRegister.addEventListener('click', () => {
+    isLoginMode = false;
+    tabRegister.classList.add('active'); tabLogin.classList.remove('active');
+    authBtn.textContent = "Account erstellen →";
+    authError.style.display = 'none';
+    validateAuthInput();
+});
+
+function validateAuthInput() {
+    authBtn.disabled = authUser.value.trim().length < 2 || authPass.value.length < 4;
+}
+authUser.addEventListener('input', validateAuthInput);
+authPass.addEventListener('input', validateAuthInput);
+
+authBtn.addEventListener('click', async () => {
+    const user = authUser.value.trim();
+    const pass = authPass.value;
+    authError.style.display = 'none';
+    authBtn.disabled = true;
+    authBtn.textContent = "Bitte warten...";
+
+    try {
+        if (isLoginMode) {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/snake_users?username=eq.${encodeURIComponent(user)}&select=password`, {headers: HEADERS});
+            const data = await res.json();
+            if (data.length === 0) throw new Error("Benutzer existiert nicht!");
+            if (data[0].password !== pass) throw new Error("Falsches Passwort!");
+            
+            finishLogin(user);
+        } else {
+            if (checkProfanity(user)) throw new Error("Dieser Name ist nicht erlaubt!");
+            if (user.length > 20) throw new Error("Name ist zu lang (max 20)!");
+            
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/snake_users?username=eq.${encodeURIComponent(user)}`, {headers: HEADERS});
+            const data = await res.json();
+            if (data.length > 0) throw new Error("Benutzername bereits vergeben!");
+            
+            const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/snake_users`, {
+                method: "POST",
+                headers: HEADERS,
+                body: JSON.stringify({ username: user, password: pass })
+            });
+            if (!insertRes.ok) throw new Error("Bitte füge zuerst die Tabelle in Supabase hinzu!");
+            
+            finishLogin(user);
+        }
+    } catch (e) {
+        authError.textContent = e.message;
+        authError.style.display = 'block';
+        authBtn.disabled = false;
+        authBtn.textContent = isLoginMode ? "Einloggen →" : "Account erstellen →";
+    }
+});
+
+function finishLogin(user) {
+    playerName = user;
+    document.getElementById('screen-name').classList.remove('active');
+    document.getElementById('screen-game').classList.add('active');
+    document.getElementById('sidebar-name').textContent = playerName;
+    refreshRank();
+    setInterval(refreshRank, 10000);
+}
 
 fetchScores().then(scores => renderRankList(previewList, scores, ''));
 
@@ -1425,5 +1516,5 @@ cv.addEventListener('touchend',e=>{
 
 startBtn.addEventListener('click',()=>init());
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0cfb791dd19a60f',t:'MTc4MTY3NDgwMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0cfc0b02f15cc0f',t:'MTc4MTY3NTE3NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
