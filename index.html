@@ -462,11 +462,19 @@ kbd{
   </div>
 
   <div class="sidebar">
-    <div class="player-tag" id="profile-edit-btn" style="cursor:pointer;" title="Profil bearbeiten">
+    <div class="player-tag" id="profile-edit-btn" style="cursor:pointer;" title="Mein Profil">
       <div class="player-avatar" id="sidebar-avatar">🤖</div>
-      <span class="player-name-tag" id="sidebar-name">—</span>
-      <span style="margin-left:auto; opacity:0.5; font-size:12px;">✏️</span>
+      <div style="display:flex; flex-direction:column; flex:1; min-width:0;">
+          <span class="player-name-tag" id="sidebar-name" style="overflow:hidden; text-overflow:ellipsis;">—</span>
+          <span style="font-size:11px; color:#f1c40f; font-weight:700;" id="sidebar-coins">🪙 0</span>
+      </div>
+      <span style="opacity:0.5; font-size:12px;">👤</span>
     </div>
+    
+    <div style="margin-top:-5px;">
+        <input type="text" id="user-search-input" onkeydown="event.stopPropagation()" onkeypress="event.stopPropagation()" onkeyup="event.stopPropagation()" placeholder="🔍 Spieler suchen..." style="width:100%; background:var(--surface2); border:0.5px solid var(--border); color:var(--text); padding:8px 10px; border-radius:6px; font-size:12px; font-family:var(--sans); outline:none; transition: border-color 0.2s;">
+    </div>
+    
     <div class="sidebar-title">🏆 Rangliste</div>
     <div class="rank-list" id="rank-list"><div class="rank-empty"><span class="loading-dot"></span></div></div>
     <div class="sidebar-footer" id="rank-status">Wird geladen…</div>
@@ -477,21 +485,44 @@ kbd{
 
 <div id="profile-modal" class="modal">
   <div class="modal-content">
-    <div class="modal-title">PROFIL BEARBEITEN</div>
+    <div class="modal-title" id="pm-title">PROFIL</div>
+    
     <div style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-bottom: 20px;">
-        <div id="profile-preview" class="player-avatar" style="width:64px; height:64px; font-size:36px; border:2px solid var(--green);">🤖</div>
-        <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.1em;">Vorschau</div>
+        <div id="pm-avatar" class="player-avatar" style="width:64px; height:64px; font-size:36px; border:2px solid var(--green);">🤖</div>
+        <div id="pm-name" style="font-size:20px; font-weight:700; color:var(--text);">Name</div>
+        
+        <div style="display:flex; gap:15px; margin-top:10px; width:100%; justify-content:space-around; background:var(--surface2); padding:15px; border-radius:12px; border:1px solid var(--border);">
+            <div style="text-align:center;"><div style="font-size:18px; font-weight:700; font-family:var(--mono);" id="pm-score">0</div><div style="font-size:10px; color:var(--muted); letter-spacing:.05em;">REKORD</div></div>
+            <div style="text-align:center;"><div style="font-size:18px; font-weight:700; font-family:var(--mono); color:var(--amber);" id="pm-trophies">0</div><div style="font-size:10px; color:var(--muted); letter-spacing:.05em;">TROPHÄEN</div></div>
+            <div style="text-align:center;"><div style="font-size:18px; font-weight:700; font-family:var(--mono); color:#f1c40f;" id="pm-coins">0</div><div style="font-size:10px; color:var(--muted); letter-spacing:.05em;">MÜNZEN</div></div>
+        </div>
     </div>
-    <div class="settings-group">
-      <label>Avatare (Auswahl)</label>
-      <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center;" id="avatar-presets"></div>
+
+    <!-- Edit Avatar (Only for me) -->
+    <div id="pm-edit-section" style="display:none;">
+        <div class="settings-group">
+          <label>Avatar ändern</label>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center;" id="avatar-presets"></div>
+        </div>
+        <div class="settings-group" style="text-align:center; margin-top:10px;">
+          <input type="file" id="avatar-upload" accept="image/*" style="display:none;">
+          <button class="btn-ghost" onclick="document.getElementById('avatar-upload').click()" style="width:100%; font-size:13px; padding:10px; margin-top:0;">Eigenes Bild hochladen...</button>
+        </div>
+        <button class="modal-close" id="pm-save-btn">Profil speichern</button>
     </div>
-    <div class="settings-group" style="text-align:center; margin-top:20px;">
-      <label>Oder eigenes Bild hochladen</label>
-      <input type="file" id="avatar-upload" accept="image/*" style="display:none;">
-      <button class="btn-ghost" onclick="document.getElementById('avatar-upload').click()" style="width:100%; font-size:13px; padding:10px; margin-top:0;">Bild auswählen...</button>
+
+    <!-- Send Coins (Only for others) -->
+    <div id="pm-send-section" style="display:none;">
+        <div class="settings-group" style="margin-bottom:10px;">
+            <label>Münzen senden</label>
+            <div style="display:flex; gap:8px;">
+                <input type="number" id="pm-send-amount" placeholder="Betrag" style="flex:1; background:var(--surface2); border:0.5px solid var(--border); color:var(--text); padding:10px; border-radius:6px; font-size:14px; outline:none;" min="1">
+                <button class="btn-primary" id="pm-send-btn" style="padding:10px 15px; font-size:14px;">Senden</button>
+            </div>
+            <div id="pm-send-error" style="color:var(--red); font-size:11px; margin-top:5px; display:none;">Nicht genug Münzen!</div>
+        </div>
+        <button class="modal-close" id="pm-close-btn" style="background:var(--surface2); color:var(--text); border:1px solid var(--border);">Schließen</button>
     </div>
-    <button class="modal-close" id="close-profile">Speichern</button>
   </div>
 </div>
 
@@ -554,13 +585,13 @@ const HEADERS = {'Content-Type':'application/json','apikey':SUPABASE_KEY,'Author
 
 async function fetchScores() {
   try {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/scores?select=name,score,level,avatar&order=score.desc&limit=10`, {headers: HEADERS});
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/scores?select=name,score,level,avatar,coins,trophies&order=score.desc&limit=15`, {headers: HEADERS});
     if (!r.ok) return [];
     return await r.json();
   } catch { return []; }
 }
 
-async function saveScore(name, score, level) {
+async function saveScore(name, currentScore, level) {
   try {
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/scores?name=eq.${encodeURIComponent(name)}`,
@@ -569,27 +600,27 @@ async function saveScore(name, score, level) {
 
     const existing = await res.json();
 
-    // Spieler existiert noch nicht
     if (!existing.length) {
       await fetch(`${SUPABASE_URL}/rest/v1/scores`, {
         method: "POST",
         headers: HEADERS,
-        body: JSON.stringify({ name, score, level, avatar: playerAvatar })
+        body: JSON.stringify({ name, score: currentScore, level, avatar: playerAvatar, coins: playerCoins, trophies: playerTrophies })
       });
       return;
     }
 
-    // Nur bei neuem Highscore speichern
-    if (score > existing[0].score) {
-      await fetch(
-        `${SUPABASE_URL}/rest/v1/scores?name=eq.${encodeURIComponent(name)}`,
-        {
-          method: "PATCH",
-          headers: HEADERS,
-          body: JSON.stringify({ score, level, avatar: playerAvatar })
-        }
-      );
-    }
+    const ex = existing[0];
+    const bestScore = Math.max(ex.score || 0, currentScore);
+    const bestLevel = currentScore > (ex.score||0) ? level : ex.level;
+
+    await fetch(
+      `${SUPABASE_URL}/rest/v1/scores?name=eq.${encodeURIComponent(name)}`,
+      {
+        method: "PATCH",
+        headers: HEADERS,
+        body: JSON.stringify({ score: bestScore, level: bestLevel, avatar: playerAvatar, coins: playerCoins, trophies: playerTrophies })
+      }
+    );
   } catch (e) {
     console.error(e);
   }
@@ -610,14 +641,10 @@ if(presetContainer) {
         btn.textContent = p;
         btn.onclick = () => {
             playerAvatar = p;
-            updateProfilePreview();
+            document.getElementById('pm-avatar').innerHTML = renderAvatar(playerAvatar);
         };
         presetContainer.appendChild(btn);
     });
-}
-
-function updateProfilePreview() {
-    document.getElementById('profile-preview').innerHTML = renderAvatar(playerAvatar);
 }
 
 const avatarUpload = document.getElementById('avatar-upload');
@@ -643,7 +670,7 @@ if(avatarUpload) {
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
                 playerAvatar = canvas.toDataURL('image/jpeg', 0.8);
-                updateProfilePreview();
+                document.getElementById('pm-avatar').innerHTML = renderAvatar(playerAvatar);
             };
             img.src = event.target.result;
         };
@@ -654,14 +681,13 @@ if(avatarUpload) {
 const profileEditBtn = document.getElementById('profile-edit-btn');
 if(profileEditBtn) {
     profileEditBtn.addEventListener('click', () => {
-        updateProfilePreview();
-        document.getElementById('profile-modal').classList.add('active');
+        openUserProfile({ name: playerName, score: hi, coins: playerCoins, trophies: playerTrophies, avatar: playerAvatar });
     });
 }
 
-const closeProfileBtn = document.getElementById('close-profile');
-if(closeProfileBtn) {
-    closeProfileBtn.addEventListener('click', async () => {
+const saveProfileBtn = document.getElementById('pm-save-btn');
+if(saveProfileBtn) {
+    saveProfileBtn.addEventListener('click', async () => {
         document.getElementById('profile-modal').classList.remove('active');
         document.getElementById('sidebar-avatar').innerHTML = renderAvatar(playerAvatar);
         
@@ -679,11 +705,111 @@ if(closeProfileBtn) {
     });
 }
 
+let currentProfileUser = null;
+
+async function openUserProfileByName(name) {
+    let u = allScores.find(s => s.name === name);
+    if(u) openUserProfile(u);
+    else {
+        try {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/scores?name=eq.${encodeURIComponent(name)}`, {headers: HEADERS});
+            const data = await res.json();
+            if(data.length > 0) openUserProfile(data[0]);
+        } catch(e) { console.error(e); }
+    }
+}
+
+function openUserProfile(u) {
+    currentProfileUser = u;
+    const isMe = (u.name === playerName);
+    
+    document.getElementById('pm-title').textContent = isMe ? "MEIN PROFIL" : "SPIELERPROFIL";
+    document.getElementById('pm-name').textContent = u.name;
+    document.getElementById('pm-avatar').innerHTML = renderAvatar(isMe ? playerAvatar : u.avatar);
+    document.getElementById('pm-score').textContent = u.score || 0;
+    document.getElementById('pm-trophies').textContent = u.trophies || 0;
+    document.getElementById('pm-coins').textContent = u.coins || 0;
+    
+    document.getElementById('pm-edit-section').style.display = isMe ? 'block' : 'none';
+    document.getElementById('pm-send-section').style.display = isMe ? 'none' : 'block';
+    
+    document.getElementById('pm-send-error').style.display = 'none';
+    document.getElementById('pm-send-amount').value = '';
+    
+    document.getElementById('profile-modal').classList.add('active');
+}
+
+const pmCloseBtn = document.getElementById('pm-close-btn');
+if(pmCloseBtn) {
+    pmCloseBtn.addEventListener('click', () => {
+        document.getElementById('profile-modal').classList.remove('active');
+    });
+}
+
+const pmSendBtn = document.getElementById('pm-send-btn');
+if(pmSendBtn) {
+    pmSendBtn.addEventListener('click', async () => {
+        const amt = parseInt(document.getElementById('pm-send-amount').value);
+        const errEl = document.getElementById('pm-send-error');
+        if(isNaN(amt) || amt <= 0) { errEl.textContent = 'Ungültiger Betrag'; errEl.style.display='block'; return; }
+        if(amt > playerCoins) { errEl.textContent = 'Nicht genug Münzen!'; errEl.style.display='block'; return; }
+        
+        errEl.style.display='none';
+        pmSendBtn.disabled = true; pmSendBtn.textContent = '...';
+        
+        try {
+            const receiverCoins = (currentProfileUser.coins || 0) + amt;
+            playerCoins -= amt;
+            
+            await fetch(`${SUPABASE_URL}/rest/v1/scores?name=eq.${encodeURIComponent(playerName)}`, {
+                method: "PATCH", headers: HEADERS, body: JSON.stringify({ coins: playerCoins })
+            });
+            await fetch(`${SUPABASE_URL}/rest/v1/scores?name=eq.${encodeURIComponent(currentProfileUser.name)}`, {
+                method: "PATCH", headers: HEADERS, body: JSON.stringify({ coins: receiverCoins })
+            });
+            
+            document.getElementById('sidebar-coins').textContent = `🪙 ${playerCoins}`;
+            currentProfileUser.coins = receiverCoins;
+            document.getElementById('pm-coins').textContent = receiverCoins;
+            
+            showToastMsg(`✓ ${amt} Münzen an ${currentProfileUser.name} gesendet!`);
+            document.getElementById('pm-send-amount').value = '';
+        } catch {
+            errEl.textContent = 'Fehler beim Senden!'; errEl.style.display='block';
+        }
+        pmSendBtn.disabled = false; pmSendBtn.textContent = 'Senden';
+    });
+}
+
+const searchInput = document.getElementById('user-search-input');
+if(searchInput) {
+    searchInput.addEventListener('keydown', async (e) => {
+        e.stopPropagation();
+        if(e.key === 'Enter') {
+            const q = searchInput.value.trim();
+            if(!q) return;
+            searchInput.value = 'Sucht...';
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/scores?name=ilike.*${encodeURIComponent(q)}*&limit=1`, {headers: HEADERS});
+                const data = await res.json();
+                if(data.length > 0) {
+                    openUserProfile(data[0]);
+                } else {
+                    showToastMsg('❌ Spieler nicht gefunden!');
+                }
+            } catch {
+                showToastMsg('❌ Fehler bei der Suche!');
+            }
+            searchInput.value = '';
+        }
+    });
+}
+
 function renderRankList(el, scores, myName) {
   if (!scores.length) { el.innerHTML = '<div class="rank-empty">Noch keine Scores</div>'; return; }
   const medals = ['🥇','🥈','🥉'];
   el.innerHTML = scores.map((s,i) => `
-    <div class="rank-item ${s.name===myName?'me':''} ${i===0?'gold':''}">
+    <div class="rank-item ${s.name===myName?'me':''} ${i===0?'gold':''}" onclick="openUserProfileByName('${s.name}')" style="cursor:pointer;" title="Profil anzeigen">
       <span class="rank-num ${i<3?'medal':''}">${i<3?medals[i]:i+1}</span>
       <div class="rank-avatar">${renderAvatar(s.avatar)}</div>
       <span class="rank-name">${s.name}</span>
@@ -938,6 +1064,9 @@ authBtn.addEventListener('click', async () => {
     }
 });
 
+let playerCoins = 0;
+let playerTrophies = 0;
+
 function finishLogin(user) {
     playerName = user;
     const sName = document.getElementById('screen-name');
@@ -950,6 +1079,19 @@ function finishLogin(user) {
         sGame.classList.add('active', 'fade-in');
         document.getElementById('sidebar-name').textContent = playerName;
         document.getElementById('sidebar-avatar').innerHTML = renderAvatar(playerAvatar);
+        
+        fetch(`${SUPABASE_URL}/rest/v1/scores?name=eq.${encodeURIComponent(playerName)}`, {headers: HEADERS})
+        .then(r => r.json())
+        .then(d => {
+            if(d.length > 0) {
+                playerCoins = d[0].coins || 0;
+                playerTrophies = d[0].trophies || 0;
+                hi = d[0].score || 0;
+                hiEl.textContent = hi;
+                document.getElementById('sidebar-coins').textContent = `🪙 ${playerCoins}`;
+            }
+        });
+
         refreshRank();
         setInterval(refreshRank, 10000);
     }, 400);
@@ -1332,14 +1474,28 @@ async function die(){
   playSound('die');
   screenShake = 15;
   spawnParticles(snake[0].x,snake[0].y,'#E24B4A',20);
-  if(score>0){
-    await saveScore(playerName,score,level);
-    showToastMsg('✓ Score gespeichert!');
+  
+  let earnedCoins = Math.floor(score / 5);
+  playerCoins += earnedCoins;
+  document.getElementById('sidebar-coins').textContent = `🪙 ${playerCoins}`;
+  
+  let isFirst = false;
+  if (allScores.length > 0 && score > allScores[0].score && score > hi) {
+      if (allScores[0].name !== playerName) {
+          isFirst = true;
+          playerTrophies += 1;
+      }
+  }
+  
+  if(score>0 || earnedCoins>0){
+    await saveScore(playerName, score, level);
+    if(isFirst) showToastMsg(`🏆 Rekord geknackt! +1 Trophäe & ${earnedCoins} Münzen`);
+    else showToastMsg(`✓ Score & ${earnedCoins} Münzen gespeichert!`);
     refreshRank();
   }
   setTimeout(()=>{
     olTitle.textContent='GAME OVER';
-    olSub.textContent=`Punkte: ${score} · Level: ${level}`;
+    olSub.textContent=`Punkte: ${score} · Level: ${level} · Münzen: +${earnedCoins}`;
     startBtn.textContent='Nochmal';
     overlay.style.display='flex';
   },500);
@@ -1656,5 +1812,5 @@ cv.addEventListener('touchend',e=>{
 
 startBtn.addEventListener('click',()=>init());
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0cfe8baa99f4fc7',t:'MTc4MTY3NjgxNA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0d001511d67f47a',t:'MTc4MTY3NzgyMQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
