@@ -525,7 +525,8 @@ kbd{
 <div id="toast">✓ Score gespeichert!</div>
 
 <div id="profile-modal" class="modal">
-  <div class="modal-content">
+  <div class="modal-content" style="position:relative;">
+    <button class="modal-close-x" id="pm-close-x" style="position:absolute; top:15px; right:15px; background:transparent; border:none; color:var(--muted); font-size:24px; cursor:pointer; line-height:1;">&times;</button>
     <div class="modal-title" id="pm-title">PROFIL</div>
     
     <div style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-bottom: 20px;">
@@ -641,6 +642,14 @@ kbd{
         <button class="btn-toggle" data-val="small">Klein</button>
         <button class="btn-toggle active" data-val="normal">Normal</button>
         <button class="btn-toggle" data-val="large">Groß</button>
+      </div>
+    </div>
+    <div class="settings-group">
+      <label>Spielfeld Optik</label>
+      <div class="btn-group" id="set-board">
+        <button class="btn-toggle active" data-val="classic">Nacht</button>
+        <button class="btn-toggle" data-val="grass">Rasen</button>
+        <button class="btn-toggle" data-val="desert">Wüste</button>
       </div>
     </div>
     <div class="settings-group">
@@ -805,7 +814,9 @@ function openUserProfile(u) {
     document.getElementById('pm-name').className = `player-name-tag ${isMe ? playerEffect : (u.effect || '')}`;
     
     const titleDisp = document.getElementById('pm-title-display');
-    titleDisp.style.display = 'none';
+    const uTitle = isMe ? playerTitle : (u.title || '');
+    titleDisp.textContent = uTitle;
+    titleDisp.style.display = uTitle ? 'block' : 'none';
     
     document.getElementById('pm-avatar').innerHTML = renderAvatar(isMe ? playerAvatar : u.avatar);
     document.getElementById('pm-score').textContent = u.score || 0;
@@ -833,11 +844,10 @@ function openUserProfile(u) {
 }
 
 const pmCloseBtn = document.getElementById('pm-close-btn');
-if(pmCloseBtn) {
-    pmCloseBtn.addEventListener('click', () => {
-        document.getElementById('profile-modal').classList.remove('active');
-    });
-}
+const pmCloseX = document.getElementById('pm-close-x');
+function closeProfile() { document.getElementById('profile-modal').classList.remove('active'); }
+if(pmCloseBtn) pmCloseBtn.addEventListener('click', closeProfile);
+if(pmCloseX) pmCloseX.addEventListener('click', closeProfile);
 
 const pmFriendBtn = document.getElementById('pm-friend-btn');
 if(pmFriendBtn) {
@@ -1486,6 +1496,7 @@ if(closeFriendsBtn) closeFriendsBtn.addEventListener('click', () => friendsModal
 let gameSettings = {
     color: 'classic',
     grid: 'normal',
+    board: 'classic',
     appleCount: 1
 };
 
@@ -1502,6 +1513,13 @@ document.querySelectorAll('#set-grid .btn-toggle').forEach(el => {
     document.querySelectorAll('#set-grid .btn-toggle').forEach(c => c.classList.remove('active'));
     this.classList.add('active');
     gameSettings.grid = this.getAttribute('data-val');
+  });
+});
+document.querySelectorAll('#set-board .btn-toggle').forEach(el => {
+  el.addEventListener('click', function() {
+    document.querySelectorAll('#set-board .btn-toggle').forEach(c => c.classList.remove('active'));
+    this.classList.add('active');
+    gameSettings.board = this.getAttribute('data-val');
   });
 });
 document.querySelectorAll('#set-apples .btn-toggle').forEach(el => {
@@ -1559,8 +1577,8 @@ function applyPerk(id) {
 function updateBuffsUI() {
     let html = '';
     if (hasShield) html += '<span title="Schutz aktiv" style="filter:drop-shadow(0 0 5px #bdc3c7)">🛡️</span>';
-    if (buffs.slow > 0) html += '<span title="Langsamer" style="filter:drop-shadow(0 0 5px #3498db)">🐢</span>';
-    if (buffs.fast > 0) html += '<span title="Schneller" style="filter:drop-shadow(0 0 5px #f1c40f)">⚡</span>';
+    if (buffs.slow > 0) html += `<span title="Langsamer" style="filter:drop-shadow(0 0 5px #3498db)">🐢 <span style="font-size:12px; font-weight:700; font-family:var(--mono);">${Math.ceil(buffs.slow/1000)}s</span></span>`;
+    if (buffs.fast > 0) html += `<span title="Schneller" style="filter:drop-shadow(0 0 5px #f1c40f)">⚡ <span style="font-size:12px; font-weight:700; font-family:var(--mono);">${Math.ceil(buffs.fast/1000)}s</span></span>`;
     const container = document.getElementById('active-buffs');
     if(container) container.innerHTML = html;
 }
@@ -1588,6 +1606,19 @@ async function refreshRank() {
   rankStatus.innerHTML = '<span class="loading-dot"></span> Aktualisiere…';
   const scores = await fetchScores();
   allScores = scores;
+  
+  const myData = scores.find(s => s.name === playerName);
+  if (myData && myData.coins !== undefined) {
+      if (myData.coins > playerCoins) {
+         showToastMsg(`💰 Du hast ${myData.coins - playerCoins} Münzen erhalten!`);
+      }
+      playerCoins = myData.coins;
+      const coinEl = document.getElementById('sidebar-coins');
+      if(coinEl) coinEl.textContent = `🪙 ${playerCoins}`;
+      const shopCoinEl = document.getElementById('shop-coins-display');
+      if(shopCoinEl) shopCoinEl.textContent = `🪙 ${playerCoins}`;
+  }
+
   updateNemesis();
   renderRankList(rankList, scores, playerName);
   const upd = new Date().toLocaleTimeString('de',{hour:'2-digit',minute:'2-digit'});
@@ -1691,6 +1722,10 @@ function loop(ts){
     particles=particles.filter(p=>p.life>0);
     if(bonus)bonus.age+=dt;
     if(currentPerk)currentPerk.age+=dt;
+    
+    let oldSlow = Math.ceil(buffs.slow/1000);
+    let oldFast = Math.ceil(buffs.fast/1000);
+    
     if(comboTimer > 0) {
         comboTimer -= dt;
         if(comboTimer <= 0) {
@@ -1701,13 +1736,13 @@ function loop(ts){
             document.getElementById('combo-bar').style.width = (comboTimer / 3500 * 100) + '%';
         }
     }
-
-    let oldSlow = buffs.slow, oldFast = buffs.fast;
+    
     if(buffs.slow>0) buffs.slow-=dt;
     if(buffs.fast>0) buffs.fast-=dt;
-    if ((oldSlow > 0 && buffs.slow <= 0) || (oldFast > 0 && buffs.fast <= 0)) {
+    if (oldSlow !== Math.ceil(buffs.slow/1000) || oldFast !== Math.ceil(buffs.fast/1000)) {
         updateBuffsUI();
     }
+    
     currentP = hasStarted ? Math.min(1, elapsed / effectiveSpeed) : 0;
     
     let targetAngle = Math.atan2(dir.y, dir.x);
@@ -1870,11 +1905,31 @@ async function die(){
 
 function render(ts){
   ctx.clearRect(0,0,W,H);
-  ctx.fillStyle=P.bg;ctx.fillRect(0,0,W,H);
-  for(let x=0;x<COLS;x++)for(let y=0;y<ROWS;y++){
-    ctx.strokeStyle=P.grid;ctx.lineWidth=.5;
-    ctx.strokeRect(x*CELL+.5,y*CELL+.5,CELL,CELL);
+  
+  if (gameSettings.board === 'grass') {
+      ctx.fillStyle = '#27ae60'; ctx.fillRect(0,0,W,H);
+      for(let x=0;x<COLS;x++)for(let y=0;y<ROWS;y++){
+          if((x+y)%2 === 0) {
+              ctx.fillStyle = '#2ecc71';
+              ctx.fillRect(x*CELL, y*CELL, CELL, CELL);
+          }
+      }
+  } else if (gameSettings.board === 'desert') {
+      ctx.fillStyle = '#e67e22'; ctx.fillRect(0,0,W,H);
+      for(let x=0;x<COLS;x++)for(let y=0;y<ROWS;y++){
+          if((x+y)%2 === 0) {
+              ctx.fillStyle = '#f39c12';
+              ctx.fillRect(x*CELL, y*CELL, CELL, CELL);
+          }
+      }
+  } else {
+      ctx.fillStyle=P.bg;ctx.fillRect(0,0,W,H);
+      for(let x=0;x<COLS;x++)for(let y=0;y<ROWS;y++){
+        ctx.strokeStyle=P.grid;ctx.lineWidth=.5;
+        ctx.strokeRect(x*CELL+.5,y*CELL+.5,CELL,CELL);
+      }
   }
+  
   trails.forEach(t=>{
     ctx.fillStyle=`rgba(29,158,117,${t.life*.3})`;
     ctx.beginPath();ctx.roundRect(t.x*CELL+3,t.y*CELL+3,CELL-6,CELL-6,3);ctx.fill();
