@@ -479,6 +479,7 @@ kbd{
         <h2 id="ol-title">BEREIT?</h2>
         <p id="ol-sub">Drücke Starten um zu spielen</p>
         <button class="btn-ghost" id="start-btn">Starten</button>
+        <button class="btn-ghost" id="revive-btn" style="display:none; color:var(--amber); border-color:var(--amber); margin-top:0;">Weiter spielen (🪙 10)</button>
         <button class="btn-ghost" id="overlay-settings-btn" style="margin-top:0;">Einstellungen</button>
       </div>
     </div>
@@ -525,8 +526,8 @@ kbd{
 <div id="toast">✓ Score gespeichert!</div>
 
 <div id="profile-modal" class="modal">
-  <div class="modal-content" style="position:relative; display:flex; padding:0; background:transparent; border:none;">
-    <div style="flex:1; background:var(--surface); border:0.5px solid var(--border); border-radius:12px; padding:2rem; max-width:400px; position:relative;">
+  <div class="modal-content" style="position:relative; display:flex; flex-wrap:wrap; justify-content:center; gap:15px; padding:0; background:transparent; border:none; max-width:800px; width:95%;">
+    <div style="flex:1; background:var(--surface); border:0.5px solid var(--border); border-radius:12px; padding:2rem; min-width:300px; max-width:400px; position:relative;">
         <button class="modal-close-x" id="pm-close-x" style="position:absolute; top:15px; right:15px; background:transparent; border:none; color:var(--muted); font-size:24px; cursor:pointer; line-height:1;">&times;</button>
         <div class="modal-title" id="pm-title">PROFIL</div>
         
@@ -575,7 +576,7 @@ kbd{
     </div>
 
     <!-- Admin Section (Side Panel) -->
-    <div id="pm-admin-section" style="display:none; background:var(--surface); border:0.5px solid var(--border); border-left:none; border-radius:0 12px 12px 0; padding:2rem; width:300px;">
+    <div id="pm-admin-section" style="display:none; background:var(--surface); border:0.5px solid var(--border); border-radius:12px; padding:2rem; width:100%; max-width:320px;">
         <div style="font-size:13px; color:var(--red); font-weight:700; margin-bottom:20px; text-transform:uppercase; letter-spacing:0.1em;">🛡️ Admin Control Panel</div>
         
         <div class="settings-group" style="margin-bottom:15px;">
@@ -2052,9 +2053,39 @@ async function die(){
   setTimeout(()=>{
     olTitle.textContent='GAME OVER';
     olSub.textContent=`Punkte: ${score} · Level: ${level} · Münzen: +${earnedCoins}`;
-    startBtn.textContent='Nochmal';
+    startBtn.textContent='Neustart';
+    
+    let reviveCost = Math.max(5, Math.floor(playerCoins * 0.15));
+    const revBtn = document.getElementById('revive-btn');
+    if (playerCoins >= reviveCost && score > 0) {
+        revBtn.style.display = 'block';
+        revBtn.textContent = `Weiter spielen (🪙 ${reviveCost})`;
+        revBtn.onclick = () => revive(reviveCost);
+    } else {
+        revBtn.style.display = 'none';
+    }
+    
     overlay.style.display='flex';
   },500);
+}
+
+async function revive(cost) {
+    playerCoins -= cost;
+    document.getElementById('sidebar-coins').textContent = `🪙 ${playerCoins}`;
+    
+    fetch(`${SUPABASE_URL}/rest/v1/scores?name=eq.${encodeURIComponent(playerName)}`, {
+        method: "PATCH", headers: HEADERS, body: JSON.stringify({ coins: playerCoins })
+    });
+
+    hasShield = true; 
+    inputQueue = [];
+    nextDir = dir;
+    
+    document.getElementById('revive-btn').style.display = 'none';
+    overlay.style.display = 'none';
+    lastTime = performance.now();
+    running = true;
+    requestAnimationFrame(loop);
 }
 
 function render(ts){
