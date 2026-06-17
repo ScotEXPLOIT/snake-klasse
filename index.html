@@ -525,71 +525,80 @@ kbd{
 <div id="toast">✓ Score gespeichert!</div>
 
 <div id="profile-modal" class="modal">
-  <div class="modal-content" style="position:relative;">
-    <button class="modal-close-x" id="pm-close-x" style="position:absolute; top:15px; right:15px; background:transparent; border:none; color:var(--muted); font-size:24px; cursor:pointer; line-height:1;">&times;</button>
-    <div class="modal-title" id="pm-title">PROFIL</div>
-    
-    <div style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-bottom: 20px;">
-        <div id="pm-avatar" class="player-avatar" style="width:64px; height:64px; font-size:36px; border:2px solid var(--green);">🤖</div>
-        <div style="display:flex; flex-direction:column; align-items:center;">
-            <div id="pm-name" style="font-size:20px; font-weight:700; color:var(--text);">Name</div>
-            <div id="pm-title-display" style="font-size:11px; color:var(--amber); font-weight:600; letter-spacing:0.05em; margin-top:2px;"></div>
-        </div>
+  <div class="modal-content" style="position:relative; display:flex; padding:0; background:transparent; border:none;">
+    <div style="flex:1; background:var(--surface); border:0.5px solid var(--border); border-radius:12px; padding:2rem; max-width:400px; position:relative;">
+        <button class="modal-close-x" id="pm-close-x" style="position:absolute; top:15px; right:15px; background:transparent; border:none; color:var(--muted); font-size:24px; cursor:pointer; line-height:1;">&times;</button>
+        <div class="modal-title" id="pm-title">PROFIL</div>
         
-        <div style="display:flex; gap:15px; margin-top:10px; width:100%; justify-content:space-around; background:var(--surface2); padding:15px; border-radius:12px; border:1px solid var(--border);">
-            <div style="text-align:center;"><div style="font-size:18px; font-weight:700; font-family:var(--mono);" id="pm-score">0</div><div style="font-size:10px; color:var(--muted); letter-spacing:.05em;">REKORD</div></div>
-            <div style="text-align:center;"><div style="font-size:18px; font-weight:700; font-family:var(--mono); color:var(--amber);" id="pm-trophies">0</div><div style="font-size:10px; color:var(--muted); letter-spacing:.05em;">TROPHÄEN</div></div>
-            <div style="text-align:center;"><div style="font-size:18px; font-weight:700; font-family:var(--mono); color:#f1c40f;" id="pm-coins">0</div><div style="font-size:10px; color:var(--muted); letter-spacing:.05em;">MÜNZEN</div></div>
-        </div>
-    </div>
-
-    <!-- Edit Avatar (Only for me) -->
-    <div id="pm-edit-section" style="display:none;">
-        <div class="settings-group">
-          <label>Avatar ändern</label>
-          <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center;" id="avatar-presets"></div>
-        </div>
-        <div class="settings-group" style="text-align:center; margin-top:10px;">
-          <input type="file" id="avatar-upload" accept="image/*" style="display:none;">
-          <button class="btn-ghost" onclick="document.getElementById('avatar-upload').click()" style="width:100%; font-size:13px; padding:10px; margin-top:0;">Eigenes Bild hochladen...</button>
-        </div>
-        <button class="modal-close" id="pm-save-btn">Profil speichern</button>
-    </div>
-
-    <!-- Send Coins (Only for others) -->
-    <div id="pm-send-section" style="display:none;">
-        <div style="display:flex; justify-content:center; margin-bottom:15px;">
-            <button class="btn-ghost" id="pm-friend-btn" style="width:100%; font-size:13px; padding:10px;">➕ Als Freund hinzufügen</button>
-        </div>
-        <div class="settings-group" style="margin-bottom:10px;">
-            <label>Münzen senden</label>
-            <div style="display:flex; gap:8px;">
-                <input type="number" id="pm-send-amount" placeholder="Betrag" style="flex:1; background:var(--surface2); border:0.5px solid var(--border); color:var(--text); padding:10px; border-radius:6px; font-size:14px; outline:none;" min="1">
-                <button class="btn-primary" id="pm-send-btn" style="padding:10px 15px; font-size:14px;">Senden</button>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-bottom: 20px;">
+            <div id="pm-avatar" class="player-avatar" style="width:64px; height:64px; font-size:36px; border:2px solid var(--green);">🤖</div>
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <div id="pm-name" style="font-size:20px; font-weight:700; color:var(--text);">Name</div>
+                <div id="pm-title-display" style="font-size:11px; color:var(--amber); font-weight:600; letter-spacing:0.05em; margin-top:2px;"></div>
             </div>
-            <div id="pm-send-error" style="color:var(--red); font-size:11px; margin-top:5px; display:none;">Nicht genug Münzen!</div>
+            
+            <div style="display:flex; gap:15px; margin-top:10px; width:100%; justify-content:space-around; background:var(--surface2); padding:15px; border-radius:12px; border:1px solid var(--border);">
+                <div style="text-align:center;"><div style="font-size:18px; font-weight:700; font-family:var(--mono);" id="pm-score">0</div><div style="font-size:10px; color:var(--muted); letter-spacing:.05em;">REKORD</div></div>
+                <div style="text-align:center;"><div style="font-size:18px; font-weight:700; font-family:var(--mono); color:var(--amber);" id="pm-trophies">0</div><div style="font-size:10px; color:var(--muted); letter-spacing:.05em;">TROPHÄEN</div></div>
+                <div style="text-align:center;"><div style="font-size:18px; font-weight:700; font-family:var(--mono); color:#f1c40f;" id="pm-coins">0</div><div style="font-size:10px; color:var(--muted); letter-spacing:.05em;">MÜNZEN</div></div>
+            </div>
         </div>
-        <button class="modal-close" id="pm-close-btn" style="background:var(--surface2); color:var(--text); border:1px solid var(--border);">Schließen</button>
+
+        <!-- Edit Avatar (Only for me) -->
+        <div id="pm-edit-section" style="display:none;">
+            <div class="settings-group">
+              <label>Avatar ändern</label>
+              <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center;" id="avatar-presets"></div>
+            </div>
+            <div class="settings-group" style="text-align:center; margin-top:10px;">
+              <input type="file" id="avatar-upload" accept="image/*" style="display:none;">
+              <button class="btn-ghost" onclick="document.getElementById('avatar-upload').click()" style="width:100%; font-size:13px; padding:10px; margin-top:0;">Eigenes Bild hochladen...</button>
+            </div>
+            <button class="modal-close" id="pm-save-btn">Profil speichern</button>
+        </div>
+
+        <!-- Send Coins (Only for others) -->
+        <div id="pm-send-section" style="display:none;">
+            <div style="display:flex; justify-content:center; margin-bottom:15px;">
+                <button class="btn-ghost" id="pm-friend-btn" style="width:100%; font-size:13px; padding:10px;">➕ Als Freund hinzufügen</button>
+            </div>
+            <div class="settings-group" style="margin-bottom:10px;">
+                <label>Münzen senden</label>
+                <div style="display:flex; gap:8px;">
+                    <input type="number" id="pm-send-amount" placeholder="Betrag" style="flex:1; background:var(--surface2); border:0.5px solid var(--border); color:var(--text); padding:10px; border-radius:6px; font-size:14px; outline:none;" min="1">
+                    <button class="btn-primary" id="pm-send-btn" style="padding:10px 15px; font-size:14px;">Senden</button>
+                </div>
+                <div id="pm-send-error" style="color:var(--red); font-size:11px; margin-top:5px; display:none;">Nicht genug Münzen!</div>
+            </div>
+            <button class="modal-close" id="pm-close-btn" style="background:var(--surface2); color:var(--text); border:1px solid var(--border);">Schließen</button>
+        </div>
     </div>
 
-    <!-- Admin Section -->
-    <div id="pm-admin-section" style="display:none; margin-top:15px; width:100%; border-top:1px solid var(--border); padding-top:15px;">
-        <div style="font-size:11px; color:var(--red); font-weight:700; margin-bottom:10px; text-transform:uppercase; text-align:center;">🛡️ Admin Control Panel</div>
+    <!-- Admin Section (Side Panel) -->
+    <div id="pm-admin-section" style="display:none; background:var(--surface); border:0.5px solid var(--border); border-left:none; border-radius:0 12px 12px 0; padding:2rem; width:300px;">
+        <div style="font-size:13px; color:var(--red); font-weight:700; margin-bottom:20px; text-transform:uppercase; letter-spacing:0.1em;">🛡️ Admin Control Panel</div>
         
-        <div style="display:flex; gap:8px; margin-bottom:8px;">
-            <input type="text" id="pm-admin-rename" placeholder="Neuer Name" style="flex:1; background:var(--surface); border:0.5px solid var(--border); color:var(--text); padding:8px; border-radius:6px; font-size:13px; outline:none;">
-            <button class="btn-primary" id="pm-admin-rename-btn" style="padding:8px 12px; font-size:13px; background:var(--surface2); border:1px solid var(--border); color:var(--text);">Umbenennen</button>
+        <div class="settings-group" style="margin-bottom:15px;">
+            <label>Name ändern</label>
+            <div style="display:flex; gap:8px;">
+                <input type="text" id="pm-admin-rename" placeholder="Neuer Name" style="flex:1; background:var(--surface2); border:0.5px solid var(--border); color:var(--text); padding:8px 10px; border-radius:6px; font-size:13px; outline:none;">
+                <button class="btn-primary" id="pm-admin-rename-btn" style="padding:8px 12px; font-size:13px; background:var(--surface2); border:1px solid var(--border); color:var(--text);">OK</button>
+            </div>
         </div>
         
-        <div style="display:flex; gap:8px; margin-bottom:8px;">
-            <input type="number" id="pm-admin-money" placeholder="+/- Münzen" style="flex:1; background:var(--surface); border:0.5px solid var(--border); color:var(--text); padding:8px; border-radius:6px; font-size:13px; outline:none;">
-            <button class="btn-primary" id="pm-admin-money-btn" style="padding:8px 12px; font-size:13px; background:var(--surface2); border:1px solid var(--border); color:var(--text);">Setzen / Geben</button>
+        <div class="settings-group" style="margin-bottom:20px;">
+            <label>Münzen verwalten (+/-)</label>
+            <div style="display:flex; gap:8px;">
+                <input type="number" id="pm-admin-money" placeholder="Betrag" style="flex:1; background:var(--surface2); border:0.5px solid var(--border); color:var(--text); padding:8px 10px; border-radius:6px; font-size:13px; outline:none;">
+                <button class="btn-primary" id="pm-admin-money-btn" style="padding:8px 12px; font-size:13px; background:var(--surface2); border:1px solid var(--border); color:var(--text);">OK</button>
+            </div>
         </div>
         
-        <div style="display:flex; gap:8px;">
-            <button class="btn-ghost" id="pm-admin-kick-btn" style="flex:1; font-size:12px; padding:8px; border-color:var(--amber); color:var(--amber);">Kick</button>
-            <button class="btn-ghost" id="pm-admin-ban-btn" style="flex:1; font-size:12px; padding:8px; border-color:var(--red); color:var(--red);">Bann</button>
-            <button class="btn-ghost" id="pm-admin-del-btn" style="flex:1; font-size:12px; padding:8px; background:var(--red); color:#fff; border:none;">Löschen</button>
+        <label style="display: block; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">Strafen</label>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+            <button class="btn-ghost" id="pm-admin-kick-btn" style="width:100%; font-size:13px; padding:10px; border-color:var(--amber); color:var(--amber);">⚠️ Kick (Aus Sitzung werfen)</button>
+            <button class="btn-ghost" id="pm-admin-ban-btn" style="width:100%; font-size:13px; padding:10px; border-color:var(--red); color:var(--red);">🔨 Permanent Bannen</button>
+            <button class="btn-ghost" id="pm-admin-del-btn" style="width:100%; font-size:13px; padding:10px; background:var(--red); color:#fff; border:none; margin-top:10px;">🗑️ Account Löschen</button>
         </div>
     </div>
   </div>
