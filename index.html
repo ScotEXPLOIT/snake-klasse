@@ -27,6 +27,16 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 /* ── SCREENS ── */
 .screen{display:none;min-height:100vh;position:relative;z-index:1;}
 .screen.active{display:flex;}
+.fade-out { animation: fadeOut 0.4s forwards cubic-bezier(0.4, 0, 0.2, 1); }
+.fade-in { animation: fadeIn 0.5s forwards cubic-bezier(0.4, 0, 0.2, 1); }
+@keyframes fadeOut {
+  from { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  to { opacity: 0; transform: translateY(-20px) scale(0.98); filter: blur(4px); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); filter: blur(4px); }
+  to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
 
 /* ── NAME SCREEN ── */
 #screen-name{
@@ -738,11 +748,21 @@ const previewList = document.getElementById('preview-list');
 let playerName = '';
 let isLoginMode = true;
 
-const BAD_WORDS = ['arsch','hurensohn','fotze','wichser','nutte','schlampe','bastard','missgeburt','spast','fick','fuck','shit','bitch','cunt','asshole','slut','whore','dick','cock','pussy','faggot','nigger','nigga','retard','hitler','nazi'];
+const BAD_SUBSTRINGS = ['hure','hurensohn','hurentochter','fotz','wichs','wixx','wixer','wichser','nutt','schlamp','fick','gefickt','ficker','ficksau','arschloch','arschgesicht','arschgeige','arschkriecher','scheiss','scheiß','kack','piss','pisser','spast','spasti','missgeburt','fehlgeburt','bastard','drecksau','dreckschwein','drecksack','miststück','miststueck','vollidiot','vollpfosten','vollhorst','schwachkopf','hirnlos','hirnamputiert','verrecke','verreck','abschaum','untermensch','ekelhaftes','opfer','mongo','mongoloid','behindert','krueppel','krüppel','schwanzlutscher','schwanz','blasen','lutscher','nutte','hurenkind','huso','huansohn','huan','mistsau','bums','bumser','bumsen','vögel','voegel','nigg','neger','kanak','zigeun','judensau','hitler','nazi','nazischwein','heilhitler','heil hitler','ss-mann','fascho','faschist','ausländerpack','auslaenderpack','fuck','fucker','motherfuck','bitch','cunt','whore','slut','bastard','asshole','dickhead','shithead','dipshit','bullshit','dumbass','jackass','piss','pussy','cocksuck','cockhead','twat','wanker','retard','fagg','nigger','nigga','kys','kill yourself'];
+
+const BAD_EXACT_WORDS = ['arsch','scheiße','scheisse','shit','kacke','kack','mist','dreck','idiot','depp','trottel','moron','penner','versager','loser','opfer','pfosten','horst','blödmann','bloedmann','blöd','bloed','dummkopf','dumm','sau','schwein','ratte','ekel','pack','slut','whore','dick','cock','pussy','faggot','retard','hoe','ass','asshole','bitch','cunt','prick','twat','wanker','moron','idiot','jerk','loser','scum','trash','garbage'];
 
 function checkProfanity(name) {
   const lower = name.toLowerCase();
-  return BAD_WORDS.some(bw => lower.includes(bw));
+  // 1. Prüfe auf schlimme Wortteile (die immer blockiert werden, egal wo sie im Wort stehen, z.B. "hure" in "nick hure")
+  const hasBadSubstring = BAD_SUBSTRINGS.some(bw => lower.includes(bw));
+  
+  // 2. Prüfe auf exakte Worte (um zu verhindern, dass "hoe" in "shoes" blockiert wird)
+  // Teilt den Namen in einzelne Wörter auf (Trennzeichen: Leerzeichen, Zahlen, Symbole)
+  const words = lower.split(/[^a-zäöüß]/);
+  const hasBadExactWord = words.some(w => BAD_EXACT_WORDS.includes(w));
+  
+  return hasBadSubstring || hasBadExactWord;
 }
 
 tabLogin.addEventListener('click', () => {
@@ -808,11 +828,18 @@ authBtn.addEventListener('click', async () => {
 
 function finishLogin(user) {
     playerName = user;
-    document.getElementById('screen-name').classList.remove('active');
-    document.getElementById('screen-game').classList.add('active');
-    document.getElementById('sidebar-name').textContent = playerName;
-    refreshRank();
-    setInterval(refreshRank, 10000);
+    const sName = document.getElementById('screen-name');
+    const sGame = document.getElementById('screen-game');
+    
+    sName.classList.add('fade-out');
+    
+    setTimeout(() => {
+        sName.classList.remove('active', 'fade-out');
+        sGame.classList.add('active', 'fade-in');
+        document.getElementById('sidebar-name').textContent = playerName;
+        refreshRank();
+        setInterval(refreshRank, 10000);
+    }, 400);
 }
 
 fetchScores().then(scores => renderRankList(previewList, scores, ''));
@@ -1516,5 +1543,5 @@ cv.addEventListener('touchend',e=>{
 
 startBtn.addEventListener('click',()=>init());
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0cfc0b02f15cc0f',t:'MTc4MTY3NTE3NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0cfd9f28fb64e42',t:'MTc4MTY3NjIwOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
