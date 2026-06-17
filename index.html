@@ -845,8 +845,8 @@ function openUserProfile(u) {
     document.getElementById('pm-name').className = `player-name-tag ${isMe ? playerEffect : (u.effect || '')}`;
     
     const titleDisp = document.getElementById('pm-title-display');
-    const uTitle = isMe ? playerTitle : (u.title || '');
-    titleDisp.textContent = uTitle;
+    const uTitle = u.title || (isMe ? playerTitle : '');
+    titleDisp.innerHTML = uTitle;
     titleDisp.style.display = uTitle ? 'block' : 'none';
     
     document.getElementById('pm-avatar').innerHTML = renderAvatar(isMe ? playerAvatar : u.avatar);
