@@ -1831,6 +1831,9 @@ function init() {
   lastTime=null;elapsed=0;foodEaten=0;currentP=0;
   buffs={slow:0,fast:0};hasShield=false;justAte=false;floatingTexts=[];screenShake=0;
   combo=0; comboTimer=0;
+  
+  window.lastCalculatedScore = 0;
+
   updateNemesis();
   updateBuffsUI();
   lastTail=null;
@@ -2048,7 +2051,12 @@ async function die(){
   screenShake = 15;
   spawnParticles(snake[0].x,snake[0].y,'#E24B4A',20);
   
-  let earnedCoins = Math.floor(score / 5);
+  let newScoreGained = score - (window.lastCalculatedScore || 0);
+  let earnedCoins = Math.floor(newScoreGained / 5);
+  if (earnedCoins < 0) earnedCoins = 0;
+  
+  window.lastCalculatedScore = score;
+  
   playerCoins += earnedCoins;
   document.getElementById('sidebar-coins').textContent = `🪙 ${playerCoins}`;
   
