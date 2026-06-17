@@ -662,7 +662,7 @@ const HEADERS = {'Content-Type':'application/json','apikey':SUPABASE_KEY,'Author
 
 async function fetchScores() {
   try {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/scores?select=name,score,level,avatar,coins,trophies,effect,unlocked_effects,title,unlocked_titles,friends&order=score.desc&limit=15`, {headers: HEADERS});
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/scores?select=name,score,level,avatar,coins,trophies,effect,unlocked_effects&order=score.desc&limit=15`, {headers: HEADERS});
     if (!r.ok) return [];
     return await r.json();
   } catch { return []; }
@@ -681,7 +681,7 @@ async function saveScore(name, currentScore, level) {
       await fetch(`${SUPABASE_URL}/rest/v1/scores`, {
         method: "POST",
         headers: HEADERS,
-        body: JSON.stringify({ name, score: currentScore, level, avatar: playerAvatar, coins: playerCoins, trophies: playerTrophies, effect: playerEffect, unlocked_effects: JSON.stringify(playerUnlockedEffects), title: playerTitle, unlocked_titles: JSON.stringify(playerUnlockedTitles), friends: JSON.stringify(playerFriends) })
+        body: JSON.stringify({ name, score: currentScore, level, avatar: playerAvatar, coins: playerCoins, trophies: playerTrophies, effect: playerEffect, unlocked_effects: JSON.stringify(playerUnlockedEffects) })
       });
       return;
     }
@@ -695,7 +695,7 @@ async function saveScore(name, currentScore, level) {
       {
         method: "PATCH",
         headers: HEADERS,
-        body: JSON.stringify({ score: bestScore, level: bestLevel, avatar: playerAvatar, coins: playerCoins, trophies: playerTrophies, effect: playerEffect, unlocked_effects: JSON.stringify(playerUnlockedEffects), title: playerTitle, unlocked_titles: JSON.stringify(playerUnlockedTitles), friends: JSON.stringify(playerFriends) })
+        body: JSON.stringify({ score: bestScore, level: bestLevel, avatar: playerAvatar, coins: playerCoins, trophies: playerTrophies, effect: playerEffect, unlocked_effects: JSON.stringify(playerUnlockedEffects) })
       }
     );
   } catch (e) {
@@ -805,9 +805,7 @@ function openUserProfile(u) {
     document.getElementById('pm-name').className = `player-name-tag ${isMe ? playerEffect : (u.effect || '')}`;
     
     const titleDisp = document.getElementById('pm-title-display');
-    const uTitle = isMe ? playerTitle : (u.title || '');
-    titleDisp.textContent = uTitle;
-    titleDisp.style.display = uTitle ? 'block' : 'none';
+    titleDisp.style.display = 'none';
     
     document.getElementById('pm-avatar').innerHTML = renderAvatar(isMe ? playerAvatar : u.avatar);
     document.getElementById('pm-score').textContent = u.score || 0;
@@ -1461,7 +1459,6 @@ if(openFriendsBtn) openFriendsBtn.addEventListener('click', () => {
             const scoreStr = u ? u.score : '?';
             const avStr = u ? renderAvatar(u.avatar) : '🤖';
             const effStr = u ? (u.effect || '') : '';
-            const tStr = u && u.title ? `<span class="rank-title-display">${u.title}</span>` : '';
             
             const row = document.createElement('div');
             row.className = 'rank-item';
@@ -1473,7 +1470,6 @@ if(openFriendsBtn) openFriendsBtn.addEventListener('click', () => {
               <div class="rank-avatar">${avStr}</div>
               <div style="display:flex; flex-direction:column; flex:1; min-width:0; margin-top:-2px;">
                 <span class="rank-name ${effStr}">${fName}</span>
-                ${tStr}
               </div>
               <span class="rank-score">${scoreStr}</span>
             `;
@@ -2181,5 +2177,5 @@ cv.addEventListener('touchend',e=>{
 
 startBtn.addEventListener('click',()=>init());
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0d046f30d3b99f5',t:'MTc4MTY4MDY3Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
