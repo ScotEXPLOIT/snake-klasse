@@ -571,6 +571,27 @@ kbd{
         </div>
         <button class="modal-close" id="pm-close-btn" style="background:var(--surface2); color:var(--text); border:1px solid var(--border);">Schließen</button>
     </div>
+
+    <!-- Admin Section -->
+    <div id="pm-admin-section" style="display:none; margin-top:15px; width:100%; border-top:1px solid var(--border); padding-top:15px;">
+        <div style="font-size:11px; color:var(--red); font-weight:700; margin-bottom:10px; text-transform:uppercase; text-align:center;">🛡️ Admin Control Panel</div>
+        
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+            <input type="text" id="pm-admin-rename" placeholder="Neuer Name" style="flex:1; background:var(--surface); border:0.5px solid var(--border); color:var(--text); padding:8px; border-radius:6px; font-size:13px; outline:none;">
+            <button class="btn-primary" id="pm-admin-rename-btn" style="padding:8px 12px; font-size:13px; background:var(--surface2); border:1px solid var(--border); color:var(--text);">Umbenennen</button>
+        </div>
+        
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+            <input type="number" id="pm-admin-money" placeholder="+/- Münzen" style="flex:1; background:var(--surface); border:0.5px solid var(--border); color:var(--text); padding:8px; border-radius:6px; font-size:13px; outline:none;">
+            <button class="btn-primary" id="pm-admin-money-btn" style="padding:8px 12px; font-size:13px; background:var(--surface2); border:1px solid var(--border); color:var(--text);">Setzen / Geben</button>
+        </div>
+        
+        <div style="display:flex; gap:8px;">
+            <button class="btn-ghost" id="pm-admin-kick-btn" style="flex:1; font-size:12px; padding:8px; border-color:var(--amber); color:var(--amber);">Kick</button>
+            <button class="btn-ghost" id="pm-admin-ban-btn" style="flex:1; font-size:12px; padding:8px; border-color:var(--red); color:var(--red);">Bann</button>
+            <button class="btn-ghost" id="pm-admin-del-btn" style="flex:1; font-size:12px; padding:8px; background:var(--red); color:#fff; border:none;">Löschen</button>
+        </div>
+    </div>
   </div>
 </div>
 
@@ -671,7 +692,7 @@ const HEADERS = {'Content-Type':'application/json','apikey':SUPABASE_KEY,'Author
 
 async function fetchScores() {
   try {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/scores?select=name,score,level,avatar,coins,trophies,effect,unlocked_effects&order=score.desc&limit=15`, {headers: HEADERS});
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/scores?select=name,score,level,avatar,coins,trophies,effect,unlocked_effects,title,unlocked_titles,friends,is_admin&order=score.desc&limit=15`, {headers: HEADERS});
     if (!r.ok) return [];
     return await r.json();
   } catch { return []; }
@@ -690,7 +711,7 @@ async function saveScore(name, currentScore, level) {
       await fetch(`${SUPABASE_URL}/rest/v1/scores`, {
         method: "POST",
         headers: HEADERS,
-        body: JSON.stringify({ name, score: currentScore, level, avatar: playerAvatar, coins: playerCoins, trophies: playerTrophies, effect: playerEffect, unlocked_effects: JSON.stringify(playerUnlockedEffects) })
+        body: JSON.stringify({ name, score: currentScore, level, avatar: playerAvatar, coins: playerCoins, trophies: playerTrophies, effect: playerEffect, unlocked_effects: JSON.stringify(playerUnlockedEffects), title: playerTitle, unlocked_titles: JSON.stringify(playerUnlockedTitles), friends: JSON.stringify(playerFriends), is_admin: playerIsAdmin })
       });
       return;
     }
@@ -704,7 +725,7 @@ async function saveScore(name, currentScore, level) {
       {
         method: "PATCH",
         headers: HEADERS,
-        body: JSON.stringify({ score: bestScore, level: bestLevel, avatar: playerAvatar, coins: playerCoins, trophies: playerTrophies, effect: playerEffect, unlocked_effects: JSON.stringify(playerUnlockedEffects) })
+        body: JSON.stringify({ score: bestScore, level: bestLevel, avatar: playerAvatar, coins: playerCoins, trophies: playerTrophies, effect: playerEffect, unlocked_effects: JSON.stringify(playerUnlockedEffects), title: playerTitle, unlocked_titles: JSON.stringify(playerUnlockedTitles), friends: JSON.stringify(playerFriends), is_admin: playerIsAdmin })
       }
     );
   } catch (e) {
@@ -826,6 +847,8 @@ function openUserProfile(u) {
     document.getElementById('pm-edit-section').style.display = isMe ? 'block' : 'none';
     document.getElementById('pm-send-section').style.display = isMe ? 'none' : 'block';
     
+    document.getElementById('pm-admin-section').style.display = (playerIsAdmin && !isMe) ? 'block' : 'none';
+    
     const friendBtn = document.getElementById('pm-friend-btn');
     if(friendBtn && !isMe) {
         if(playerFriends.includes(u.name)) {
@@ -910,6 +933,98 @@ if(pmSendBtn) {
     });
 }
 
+const pmAdminRenameBtn = document.getElementById('pm-admin-rename-btn');
+if (pmAdminRenameBtn) {
+    pmAdminRenameBtn.addEventListener('click', async () => {
+        const newName = document.getElementById('pm-admin-rename').value.trim();
+        if(!newName || !currentProfileUser) return;
+        pmAdminRenameBtn.disabled = true;
+        
+        try {
+            await fetch(`${SUPABASE_URL}/rest/v1/snake_users?username=eq.${encodeURIComponent(currentProfileUser.name)}`, {
+                method: "PATCH", headers: HEADERS, body: JSON.stringify({ username: newName })
+            });
+            showToastMsg(`✓ Name zu ${newName} geändert!`);
+            closeProfile();
+            refreshRank();
+        } catch(e) {
+            showToastMsg('❌ Fehler beim Umbenennen');
+        }
+        pmAdminRenameBtn.disabled = false;
+    });
+}
+
+const pmAdminMoneyBtn = document.getElementById('pm-admin-money-btn');
+if (pmAdminMoneyBtn) {
+    pmAdminMoneyBtn.addEventListener('click', async () => {
+        const amt = parseInt(document.getElementById('pm-admin-money').value);
+        if(isNaN(amt) || !currentProfileUser) return;
+        pmAdminMoneyBtn.disabled = true;
+        
+        try {
+            const newCoins = Math.max(0, (currentProfileUser.coins || 0) + amt);
+            await fetch(`${SUPABASE_URL}/rest/v1/scores?name=eq.${encodeURIComponent(currentProfileUser.name)}`, {
+                method: "PATCH", headers: HEADERS, body: JSON.stringify({ coins: newCoins })
+            });
+            currentProfileUser.coins = newCoins;
+            document.getElementById('pm-coins').textContent = newCoins;
+            showToastMsg(`✓ Guthaben angepasst!`);
+            document.getElementById('pm-admin-money').value = '';
+        } catch(e) {
+            showToastMsg('❌ Fehler');
+        }
+        pmAdminMoneyBtn.disabled = false;
+    });
+}
+
+const pmAdminKickBtn = document.getElementById('pm-admin-kick-btn');
+if (pmAdminKickBtn) {
+    pmAdminKickBtn.addEventListener('click', async () => {
+        if(!currentProfileUser) return;
+        if(confirm(`${currentProfileUser.name} aus der Sitzung werfen?`)) {
+            try {
+                await fetch(`${SUPABASE_URL}/rest/v1/snake_users?username=eq.${encodeURIComponent(currentProfileUser.name)}`, {
+                    method: "PATCH", headers: HEADERS, body: JSON.stringify({ kick_signal: Date.now() })
+                });
+                showToastMsg('✓ Spieler gekickt!');
+            } catch(e) { showToastMsg('❌ Fehler'); }
+        }
+    });
+}
+
+const pmAdminBanBtn = document.getElementById('pm-admin-ban-btn');
+if (pmAdminBanBtn) {
+    pmAdminBanBtn.addEventListener('click', async () => {
+        if(!currentProfileUser) return;
+        if(confirm(`${currentProfileUser.name} permanent bannen?`)) {
+            try {
+                await fetch(`${SUPABASE_URL}/rest/v1/snake_users?username=eq.${encodeURIComponent(currentProfileUser.name)}`, {
+                    method: "PATCH", headers: HEADERS, body: JSON.stringify({ is_banned: true })
+                });
+                showToastMsg('✓ Spieler gebannt!');
+                closeProfile();
+            } catch(e) { showToastMsg('❌ Fehler'); }
+        }
+    });
+}
+
+const pmAdminDelBtn = document.getElementById('pm-admin-del-btn');
+if (pmAdminDelBtn) {
+    pmAdminDelBtn.addEventListener('click', async () => {
+        if(!currentProfileUser) return;
+        if(confirm(`${currentProfileUser.name} vollständig aus der Datenbank LÖSCHEN?`)) {
+            try {
+                await fetch(`${SUPABASE_URL}/rest/v1/snake_users?username=eq.${encodeURIComponent(currentProfileUser.name)}`, {
+                    method: "DELETE", headers: HEADERS
+                });
+                showToastMsg('✓ Spieler gelöscht!');
+                closeProfile();
+                refreshRank();
+            } catch(e) { showToastMsg('❌ Fehler beim Löschen'); }
+        }
+    });
+}
+
 const searchInput = document.getElementById('user-search-input');
 if(searchInput) {
     searchInput.addEventListener('keydown', async (e) => {
@@ -942,7 +1057,10 @@ function renderRankList(el, scores, myName) {
       <span class="rank-num ${i<3?'medal':''}">${i<3?medals[i]:i+1}</span>
       <div class="rank-avatar">${renderAvatar(s.avatar)}</div>
       <div style="display:flex; flex-direction:column; flex:1; min-width:0; margin-top:-2px;">
-        <span class="rank-name ${s.effect || ''}">${s.name}</span>
+        <div style="display:flex; align-items:center; gap:5px;">
+            <span class="rank-name ${s.effect || ''}">${s.name}</span>
+            ${s.is_admin ? '<span style="background:var(--red); color:#fff; padding:2px 4px; border-radius:4px; font-size:8px; font-weight:700; letter-spacing:0.05em; line-height:1;">ADMIN</span>' : ''}
+        </div>
         ${s.title ? `<span class="rank-title-display">${s.title}</span>` : ''}
       </div>
       <span class="rank-score">${s.score}</span>
@@ -1153,6 +1271,8 @@ authUser.addEventListener('input', validateAuthInput);
 authPass.addEventListener('input', validateAuthInput);
 
 let playerAvatar = '🤖';
+let playerIsAdmin = false;
+let playerKickSignal = 0;
 
 authBtn.addEventListener('click', async () => {
     const user = authUser.value.trim();
@@ -1163,12 +1283,15 @@ authBtn.addEventListener('click', async () => {
 
     try {
         if (isLoginMode) {
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/snake_users?username=eq.${encodeURIComponent(user)}&select=password,avatar`, {headers: HEADERS});
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/snake_users?username=eq.${encodeURIComponent(user)}&select=password,avatar,is_admin,is_banned,kick_signal`, {headers: HEADERS});
             const data = await res.json();
             if (data.length === 0) throw new Error("Benutzer existiert nicht!");
+            if (data[0].is_banned) throw new Error("Du wurdest gebannt!");
             if (data[0].password !== pass) throw new Error("Falsches Passwort!");
             
             playerAvatar = data[0].avatar || '🤖';
+            playerIsAdmin = data[0].is_admin || false;
+            playerKickSignal = data[0].kick_signal || 0;
             finishLogin(user);
         } else {
             if (checkProfanity(user)) throw new Error("Dieser Name ist nicht erlaubt!");
@@ -1179,12 +1302,14 @@ authBtn.addEventListener('click', async () => {
             if (data.length > 0) throw new Error("Benutzername bereits vergeben!");
             
             playerAvatar = '🤖';
+            playerIsAdmin = false;
+            playerKickSignal = 0;
             const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/snake_users`, {
                 method: "POST",
                 headers: HEADERS,
                 body: JSON.stringify({ username: user, password: pass, avatar: playerAvatar })
             });
-            if (!insertRes.ok) throw new Error("Bitte füge zuerst die Spalte 'avatar' in Supabase hinzu!");
+            if (!insertRes.ok) throw new Error("Supabase Fehler (Tabelle snake_users prüfen)!");
             
             finishLogin(user);
         }
@@ -1607,9 +1732,13 @@ async function refreshRank() {
   
   if (playerName) {
       try {
-          const uCheck = await fetch(`${SUPABASE_URL}/rest/v1/snake_users?username=eq.${encodeURIComponent(playerName)}&select=username`, {headers: HEADERS});
+          const uCheck = await fetch(`${SUPABASE_URL}/rest/v1/snake_users?username=eq.${encodeURIComponent(playerName)}&select=username,is_banned,kick_signal`, {headers: HEADERS});
           const uData = await uCheck.json();
-          if (!uCheck.ok || uData.length === 0) {
+          if (!uCheck.ok || uData.length === 0 || uData[0].is_banned) {
+              window.location.reload();
+              return;
+          }
+          if (uData[0].kick_signal && uData[0].kick_signal > playerKickSignal) {
               window.location.reload();
               return;
           }
