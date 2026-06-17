@@ -241,7 +241,7 @@ kbd{
 .settings-group label { display: block; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
 
 /* Better settings UI elements */
-.skin-options { display: flex; gap: 8px; margin-top: 5px; flex-wrap: wrap; }
+.skin-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); gap: 8px; margin-top: 5px; }
 .skin-card {
   flex: 1; min-width: 70px; padding: 10px; border: 1px solid var(--border);
   border-radius: 8px; cursor: pointer; text-align: center;
@@ -256,11 +256,6 @@ kbd{
 .sc-red .skin-dot { background: #e24b4a; }
 .sc-blue .skin-dot { background: #3498db; }
 .sc-rainbow .skin-dot { background: linear-gradient(90deg, #ff4b4b, #f1c40f, #2ecc71, #3498db); }
-.sc-gold .skin-dot { background: #f1c40f; }
-.sc-devil .skin-dot { background: #c0392b; }
-.sc-cat .skin-dot { background: #e67e22; }
-.sc-ninja .skin-dot { background: #2c3e50; }
-.sc-ghost .skin-dot { background: rgba(236,240,241,0.6); }
 .skin-label { font-size: 11px; font-weight: 500; }
 
 .btn-group { display: flex; gap: 8px; margin-top: 5px; }
@@ -399,7 +394,20 @@ kbd{
       <div class="hud-box"><span class="hud-label">Rekord</span><span class="hud-val" id="hi">0</span></div>
       <div class="hud-box"><span class="hud-label">Level</span><span class="hud-val" id="lvl">1</span></div>
     </div>
-    <div id="active-buffs" style="display:flex;gap:10px;justify-content:center;height:24px;font-size:20px;margin-bottom:-5px;margin-top:5px;"></div>
+    
+    <div style="display:flex; justify-content:space-between; width:100%; align-items:center; margin-top:-5px; margin-bottom:5px;">
+      <div id="nemesis-box" style="display:none; align-items:center; gap:6px; background:rgba(29,158,117,0.1); border:1px solid rgba(29,158,117,0.3); padding:4px 10px; border-radius:8px; font-size:11px; font-weight:600; color:var(--text); transition:all 0.3s; transform:translateY(0);">
+        🎯 Ziel: <span id="nemesis-name" style="color:var(--green2)">—</span> (<span id="nemesis-score">0</span>)
+      </div>
+      <div id="active-buffs" style="display:flex; gap:10px; font-size:20px; align-items:center; min-height:24px;"></div>
+      <div id="combo-box" style="display:none; align-items:center; gap:6px; background:rgba(239,159,39,0.1); border:1px solid rgba(239,159,39,0.3); padding:4px 10px; border-radius:8px; font-size:11px; font-weight:700; color:#f1c40f; transition:all 0.15s; transform:scale(1);">
+        🔥 <span id="combo-val">2</span>x COMBO
+        <div style="width:40px; height:4px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden;">
+            <div id="combo-bar" style="width:100%; height:100%; background:#f1c40f; transition:width 0.1s linear;"></div>
+        </div>
+      </div>
+    </div>
+    
     <div id="canvas-wrap">
       <canvas id="c"></canvas>
       <div id="overlay">
@@ -441,7 +449,7 @@ kbd{
     <div class="modal-title">EINSTELLUNGEN</div>
     <div class="settings-group">
       <label>Farbe / Muster</label>
-      <div class="skin-options" id="set-color" style="max-height: 220px; overflow-y: auto;">
+      <div class="skin-options" id="set-color">
         <div class="skin-card sc-classic active" data-val="classic">
           <div class="skin-preview">
             <div class="skin-dot head"></div><div class="skin-dot"></div><div class="skin-dot"></div>
@@ -465,36 +473,6 @@ kbd{
             <div class="skin-dot head"></div><div class="skin-dot"></div><div class="skin-dot"></div>
           </div>
           <div class="skin-label">Regenbogen</div>
-        </div>
-        <div class="skin-card sc-gold" data-val="gold">
-          <div class="skin-preview">
-            <div class="skin-dot head"></div><div class="skin-dot"></div><div class="skin-dot"></div>
-          </div>
-          <div class="skin-label">König</div>
-        </div>
-        <div class="skin-card sc-devil" data-val="devil">
-          <div class="skin-preview">
-            <div class="skin-dot head"></div><div class="skin-dot"></div><div class="skin-dot"></div>
-          </div>
-          <div class="skin-label">Teufel</div>
-        </div>
-        <div class="skin-card sc-cat" data-val="cat">
-          <div class="skin-preview">
-            <div class="skin-dot head"></div><div class="skin-dot"></div><div class="skin-dot"></div>
-          </div>
-          <div class="skin-label">Katze</div>
-        </div>
-        <div class="skin-card sc-ninja" data-val="ninja">
-          <div class="skin-preview">
-            <div class="skin-dot head"></div><div class="skin-dot"></div><div class="skin-dot"></div>
-          </div>
-          <div class="skin-label">Ninja</div>
-        </div>
-        <div class="skin-card sc-ghost" data-val="ghost">
-          <div class="skin-preview">
-            <div class="skin-dot head"></div><div class="skin-dot"></div><div class="skin-dot"></div>
-          </div>
-          <div class="skin-label">Geist</div>
         </div>
       </div>
     </div>
@@ -844,7 +822,8 @@ function updateBuffsUI() {
     if(container) container.innerHTML = html;
 }
 
-let snake,dir,nextDir,foods=[],bonus,score,hi=0,level,speed,running,paused,lastTime,elapsed,particles,trails,flashTimer,currentP=0,inputQueue=[],lastTail=null,hasStarted=false,justAte=false,floatingTexts=[],screenShake=0;
+let snake,dir,nextDir,foods=[],bonus,score,hi=0,level,speed,running,paused,lastTime,elapsed,particles,trails,flashTimer,currentP=0,inputQueue=[],lastTail=null,hasStarted=false,justAte=false,floatingTexts=[],screenShake=0,headAngle=0;
+let combo = 0, comboTimer = 0, allScores = [], nemesis = null;
 
 const P={
   bg:'#18222c',grid:'rgba(255,255,255,0.025)',
@@ -865,14 +844,35 @@ function startGame() {
 async function refreshRank() {
   rankStatus.innerHTML = '<span class="loading-dot"></span> Aktualisiere…';
   const scores = await fetchScores();
+  allScores = scores;
+  updateNemesis();
   renderRankList(rankList, scores, playerName);
   const upd = new Date().toLocaleTimeString('de',{hour:'2-digit',minute:'2-digit'});
   rankStatus.textContent = `Zuletzt: ${upd}`;
 }
 
+function updateNemesis() {
+    nemesis = null;
+    let higherScores = allScores.filter(s => s.score > score && s.name !== playerName);
+    const nBox = document.getElementById('nemesis-box');
+    
+    if(higherScores.length > 0) {
+        nemesis = higherScores[higherScores.length - 1]; // Der Typ direkt über dir
+        document.getElementById('nemesis-name').textContent = nemesis.name;
+        document.getElementById('nemesis-score').textContent = nemesis.score;
+        nBox.style.display = 'flex';
+        // Bounce Animation
+        nBox.style.transform = 'translateY(-4px)';
+        setTimeout(() => nBox.style.transform = 'translateY(0)', 200);
+    } else {
+        nBox.style.display = 'none';
+    }
+}
+
 function init() {
   inputQueue=[];
   hasStarted=false;
+  headAngle=0;
   snake=[{x:12,y:10},{x:11,y:10},{x:10,y:10}];
   dir={x:1,y:0};nextDir={x:1,y:0};
   
@@ -885,6 +885,8 @@ function init() {
   running=true;paused=false;particles=[];trails=[];flashTimer=0;
   lastTime=null;elapsed=0;foodEaten=0;currentP=0;
   buffs={slow:0,fast:0};hasShield=false;justAte=false;floatingTexts=[];screenShake=0;
+  combo=0; comboTimer=0;
+  updateNemesis();
   updateBuffsUI();
   lastTail=null;
   scoreEl.textContent=0;lvlEl.textContent=1;
@@ -946,6 +948,16 @@ function loop(ts){
     particles=particles.filter(p=>p.life>0);
     if(bonus)bonus.age+=dt;
     if(currentPerk)currentPerk.age+=dt;
+    if(comboTimer > 0) {
+        comboTimer -= dt;
+        if(comboTimer <= 0) {
+            comboTimer = 0;
+            combo = 0;
+            document.getElementById('combo-box').style.display = 'none';
+        } else {
+            document.getElementById('combo-bar').style.width = (comboTimer / 3500 * 100) + '%';
+        }
+    }
 
     let oldSlow = buffs.slow, oldFast = buffs.fast;
     if(buffs.slow>0) buffs.slow-=dt;
@@ -954,6 +966,16 @@ function loop(ts){
         updateBuffsUI();
     }
     currentP = hasStarted ? Math.min(1, elapsed / effectiveSpeed) : 0;
+    
+    let targetAngle = Math.atan2(dir.y, dir.x);
+    if (inputQueue.length > 0) targetAngle = Math.atan2(inputQueue[0].y, inputQueue[0].x);
+    else if (hasStarted) targetAngle = Math.atan2(nextDir.y, nextDir.x);
+    if (!hasStarted) targetAngle = 0;
+    
+    let diff = targetAngle - headAngle;
+    while (diff > Math.PI) diff -= Math.PI * 2;
+    while (diff < -Math.PI) diff += Math.PI * 2;
+    headAngle += diff * (dt / 40); // smooth rotation over time
   }
   render(ts);
 }
@@ -1007,10 +1029,24 @@ function tick(){
   let eatenFoodIdx = foods.findIndex(f => f.x===head.x && f.y===head.y);
   if(eatenFoodIdx !== -1){
     let f = foods[eatenFoodIdx];
-    score+=level*10;ate=true;foodEaten++;
+    
+    combo++;
+    comboTimer = 3500; // 3.5 seconds to eat next apple
+    let points = level*10 + (combo > 1 ? (combo-1)*5 : 0);
+    score+=points;
+    
+    if (combo > 1) {
+        document.getElementById('combo-box').style.display = 'flex';
+        document.getElementById('combo-val').textContent = combo;
+        let cb = document.getElementById('combo-box');
+        cb.style.transform = 'scale(1.1)';
+        setTimeout(() => cb.style.transform = 'scale(1)', 150);
+    }
+    
+    ate=true;foodEaten++;
     playSound('eat');
-    floatingTexts.push({x: f.x*CELL, y: f.y*CELL, text: "+10", life: 1, color: '#E24B4A'});
-    spawnParticles(f.x,f.y,P.food,12);flashTimer=120;
+    floatingTexts.push({x: f.x*CELL, y: f.y*CELL, text: `+${points}${combo>1?' 🔥'+combo+'x':''}`, life: 1, color: combo>1 ? '#f1c40f' : '#E24B4A'});
+    spawnParticles(f.x,f.y,combo>1 ? P.bonus : P.food,12);flashTimer=120;
     
     foods.splice(eatenFoodIdx, 1);
     while(foods.length < gameSettings.appleCount) {
@@ -1022,6 +1058,11 @@ function tick(){
     if(foodEaten%8===0){level++;speed=Math.max(40,speed-6);lvlEl.textContent=level;}
     scoreEl.textContent=score;
     if(score>hi){hi=score;hiEl.textContent=hi;}
+    if(nemesis && score > nemesis.score) {
+        playSound('bonus');
+        showToastMsg(`🔥 ${nemesis.name} überholt!`);
+        updateNemesis();
+    }
   }
   if(bonus&&head.x===bonus.x&&head.y===bonus.y){
     score+=level*25;ate=true;
@@ -1031,6 +1072,10 @@ function tick(){
     spawnParticles(bonus.x,bonus.y,P.bonus,16);bonus=null;
     scoreEl.textContent=score;
     if(score>hi){hi=score;hiEl.textContent=hi;}
+    if(nemesis && score > nemesis.score) {
+        showToastMsg(`🔥 ${nemesis.name} überholt!`);
+        updateNemesis();
+    }
   }
   if(currentPerk&&head.x===currentPerk.x&&head.y===currentPerk.y){
     ate=true;
@@ -1104,11 +1149,6 @@ function render(ts){
   if (gameSettings.color === 'red') { colorStr = '#e24b4a'; headGlow = 'rgba(226,75,74,0.4)'; }
   else if (gameSettings.color === 'blue') { colorStr = '#3498db'; headGlow = 'rgba(52,152,219,0.4)'; }
   else if (gameSettings.color === 'rainbow') { colorStr = `hsl(${(ts * 0.1) % 360}, 80%, 50%)`; headGlow = `hsla(${(ts * 0.1) % 360}, 80%, 50%, 0.5)`; }
-  else if (gameSettings.color === 'gold') { colorStr = '#f1c40f'; headGlow = 'rgba(241,196,15,0.4)'; }
-  else if (gameSettings.color === 'devil') { colorStr = '#c0392b'; headGlow = 'rgba(192,57,43,0.4)'; }
-  else if (gameSettings.color === 'cat') { colorStr = '#e67e22'; headGlow = 'rgba(230,126,34,0.4)'; }
-  else if (gameSettings.color === 'ninja') { colorStr = '#2c3e50'; headGlow = 'rgba(44,62,80,0.4)'; }
-  else if (gameSettings.color === 'ghost') { colorStr = 'rgba(236,240,241,0.6)'; headGlow = 'rgba(236,240,241,0.3)'; }
 
   ctx.strokeStyle = colorStr;
   ctx.lineWidth = snakeThickness;
@@ -1134,7 +1174,7 @@ function render(ts){
       }
   }
   ctx.stroke();
-  
+
   // Head Glow & Shield
   let headPt = drawPts[0];
   let cx = headPt.x * CELL + CELL/2;
@@ -1159,91 +1199,23 @@ function render(ts){
   let eyeDir = dir;
   if (inputQueue.length > 0) eyeDir = inputQueue[0];
   else if (hasStarted) eyeDir = nextDir;
-  let vx = eyeDir.x, vy = eyeDir.y;
-  let rx = -vy, ry = vx;
-
-  if (gameSettings.color === 'devil') {
-      ctx.fillStyle = '#922b21';
-      ctx.beginPath();
-      let lx = cx - vx*2 + rx*4, ly = cy - vy*2 + ry*4;
-      ctx.moveTo(lx, ly);
-      ctx.lineTo(lx - vx*6 + rx*5, ly - vy*6 + ry*5);
-      ctx.lineTo(lx - vx*4 - rx*1, ly - vy*4 - ry*1);
-      ctx.fill();
-      ctx.beginPath();
-      let rx_ = cx - vx*2 - rx*4, ry_ = cy - vy*2 - ry*4;
-      ctx.moveTo(rx_, ry_);
-      ctx.lineTo(rx_ - vx*6 - rx*5, ry_ - vy*6 - ry*5);
-      ctx.lineTo(rx_ - vx*4 + rx*1, ry_ - vy*4 + ry*1);
-      ctx.fill();
-  } else if (gameSettings.color === 'cat') {
-      ctx.fillStyle = colorStr;
-      ctx.beginPath();
-      let lx = cx - vx*1 + rx*4, ly = cy - vy*1 + ry*4;
-      ctx.moveTo(lx, ly);
-      ctx.lineTo(lx - vx*6 + rx*3, ly - vy*6 + ry*3);
-      ctx.lineTo(lx - vx*3 - rx*2, ly - vy*3 - ry*2);
-      ctx.fill();
-      ctx.beginPath();
-      let rx_ = cx - vx*1 - rx*4, ry_ = cy - vy*1 - ry*4;
-      ctx.moveTo(rx_, ry_);
-      ctx.lineTo(rx_ - vx*6 - rx*3, ry_ - vy*6 - ry*3);
-      ctx.lineTo(rx_ - vx*3 + rx*2, ry_ - vy*3 + ry*2);
-      ctx.fill();
-      ctx.fillStyle = '#e74c3c';
-      ctx.beginPath();
-      ctx.moveTo(lx - vx*1, ly - vy*1);
-      ctx.lineTo(lx - vx*4 + rx*2, ly - vy*4 + ry*2);
-      ctx.lineTo(lx - vx*2 - rx*1, ly - vy*2 - ry*1);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(rx_ - vx*1, ry_ - vy*1);
-      ctx.lineTo(rx_ - vx*4 - rx*2, ry_ - vy*4 - ry*2);
-      ctx.lineTo(rx_ - vx*2 + rx*1, ry_ - vy*2 + ry*1);
-      ctx.fill();
-  } else if (gameSettings.color === 'gold') {
-      ctx.fillStyle = '#f39c12';
-      ctx.beginPath();
-      let bx = cx - vx*2, by = cy - vy*2;
-      ctx.moveTo(bx + rx*4, by + ry*4);
-      ctx.lineTo(bx - rx*4, by - ry*4);
-      ctx.lineTo(bx - rx*5 - vx*4, by - ry*5 - vy*4);
-      ctx.lineTo(bx - rx*2 - vx*2, by - ry*2 - vy*2);
-      ctx.lineTo(bx - vx*5, by - vy*5);
-      ctx.lineTo(bx + rx*2 - vx*2, by + ry*2 - vy*2);
-      ctx.lineTo(bx + rx*5 - vx*4, by + ry*5 - vy*4);
-      ctx.fill();
-  } else if (gameSettings.color === 'ninja') {
-      ctx.strokeStyle = '#e74c3c';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(cx + rx*6 + vx*2, cy + ry*6 + vy*2);
-      ctx.lineTo(cx - rx*6 + vx*2, cy - ry*6 + vy*2);
-      ctx.stroke();
-      ctx.fillStyle = '#e74c3c';
-      ctx.beginPath();
-      ctx.arc(cx - vx*6 + rx*5, cy - vy*6 + ry*5, 2.5, 0, Math.PI*2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(cx - vx*6 + rx*5, cy - vy*6 + ry*5);
-      ctx.lineTo(cx - vx*10 + rx*6, cy - vy*10 + ry*6);
-      ctx.lineTo(cx - vx*9 + rx*4, cy - vy*9 + ry*4);
-      ctx.fill();
-  }
-
+  
   // Eyes
+  let hx = Math.cos(headAngle);
+  let hy = Math.sin(headAngle);
+
   let eo = 4, er = 2.5;
-  let ex1 = cx + eyeDir.y * eo + eyeDir.x * 3;
-  let ey1 = cy - eyeDir.x * eo + eyeDir.y * 3;
-  let ex2 = cx - eyeDir.y * eo + eyeDir.x * 3;
-  let ey2 = cy + eyeDir.x * eo + eyeDir.y * 3;
+  let ex1 = cx + hy * eo + hx * 3;
+  let ey1 = cy - hx * eo + hy * 3;
+  let ex2 = cx - hy * eo + hx * 3;
+  let ey2 = cy + hx * eo + hy * 3;
   
   ctx.fillStyle = '#fff';
   ctx.beginPath(); ctx.arc(ex1, ey1, er, 0, Math.PI * 2); ctx.fill();
   ctx.beginPath(); ctx.arc(ex2, ey2, er, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = '#080c10';
-  ctx.beginPath(); ctx.arc(ex1 + eyeDir.x, ey1 + eyeDir.y, 1.2, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(ex2 + eyeDir.x, ey2 + eyeDir.y, 1.2, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(ex1 + hx, ey1 + hy, 1.2, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(ex2 + hx, ey2 + hy, 1.2, 0, Math.PI * 2); ctx.fill();
 
   const pulse=Math.sin(ts*.006)*3;
   
@@ -1295,7 +1267,9 @@ function render(ts){
     ctx.fillStyle=P.bonus;
     ctx.beginPath();ctx.arc(bonus.x*CELL+CELL/2,bonus.y*CELL+CELL/2,7+bp*.4,0,Math.PI*2);ctx.fill();
     ctx.shadowBlur=0;ctx.globalAlpha=1;
-    ctx.font='10px sans-serif';ctx.fillText('⭐',bonus.x*CELL+CELL/2-7,bonus.y*CELL+CELL/2+4);
+    ctx.font='10px sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('⭐',bonus.x*CELL+CELL/2,bonus.y*CELL+CELL/2 + 1);
   }
   if(currentPerk){
     const bp=Math.sin(ts*.009)*2,rem=1-currentPerk.age/currentPerk.life;
@@ -1304,7 +1278,9 @@ function render(ts){
     ctx.fillStyle=currentPerk.type.color;
     ctx.beginPath();ctx.arc(currentPerk.x*CELL+CELL/2,currentPerk.y*CELL+CELL/2,7+bp*.4,0,Math.PI*2);ctx.fill();
     ctx.shadowBlur=0;ctx.globalAlpha=1;
-    ctx.font='10px sans-serif';ctx.fillText(currentPerk.type.icon,currentPerk.x*CELL+CELL/2-7,currentPerk.y*CELL+CELL/2+4);
+    ctx.font='10px sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(currentPerk.type.icon,currentPerk.x*CELL+CELL/2,currentPerk.y*CELL+CELL/2 + 1);
   }
   particles.forEach(p=>{
     ctx.globalAlpha=p.life;ctx.fillStyle=p.color;
@@ -1316,6 +1292,7 @@ function render(ts){
       ctx.globalAlpha = ft.life;
       ctx.font = '700 16px Space Mono, monospace';
       ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
       ctx.fillText(ft.text, ft.x + CELL/2, ft.y + CELL/2 - (1 - ft.life) * 30);
       ft.life -= 0.025;
   });
@@ -1328,6 +1305,7 @@ function render(ts){
     ctx.fillStyle=`rgba(255,255,255,${0.4 + Math.sin(ts*.004)*0.3})`;
     ctx.font='600 16px Space Grotesk, sans-serif';
     ctx.textAlign='center';
+    ctx.textBaseline = 'alphabetic';
     ctx.fillText('Drücke eine Taste zum Starten', W/2, H/2 - 40);
     ctx.textAlign='left';
   }
@@ -1335,6 +1313,7 @@ function render(ts){
   if(paused){
     ctx.fillStyle='rgba(8,12,16,.6)';ctx.fillRect(0,0,W,H);
     ctx.fillStyle='#fff';ctx.font='700 20px Space Mono, monospace';ctx.textAlign='center';
+    ctx.textBaseline = 'alphabetic';
     ctx.fillText('PAUSE',W/2,H/2);ctx.textAlign='left';
   }
 }
@@ -1443,5 +1422,5 @@ cv.addEventListener('touchend',e=>{
 
 startBtn.addEventListener('click',()=>init());
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0c9f2bf99ed3ecf',t:'MTc4MTYxNDMxMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0cfa887e865b48e',t:'MTc4MTY3NDE4NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
