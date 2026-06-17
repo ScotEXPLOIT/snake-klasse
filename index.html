@@ -395,12 +395,15 @@ kbd{
       <div class="hud-box"><span class="hud-label">Level</span><span class="hud-val" id="lvl">1</span></div>
     </div>
     
-    <div style="display:flex; justify-content:space-between; width:100%; align-items:center; margin-top:-5px; margin-bottom:5px;">
-      <div id="nemesis-box" style="display:none; align-items:center; gap:6px; background:rgba(29,158,117,0.1); border:1px solid rgba(29,158,117,0.3); padding:4px 10px; border-radius:8px; font-size:11px; font-weight:600; color:var(--text); transition:all 0.3s; transform:translateY(0);">
+    <div style="position:relative; width:100%; display:flex; justify-content:space-between; align-items:flex-end; margin-top:-5px; margin-bottom:5px; min-height:24px;">
+      
+      <div id="nemesis-box" style="display:none; align-items:center; gap:6px; background:var(--surface2); border:1px solid rgba(29,158,117,0.3); padding:4px 10px; border-radius:8px; font-size:11px; font-weight:600; color:var(--text); transition:all 0.3s; transform:translateY(0); z-index:5;">
         🎯 Ziel: <span id="nemesis-name" style="color:var(--green2)">—</span> (<span id="nemesis-score">0</span>)
       </div>
-      <div id="active-buffs" style="display:flex; gap:10px; font-size:20px; align-items:center; min-height:24px;"></div>
-      <div id="combo-box" style="display:none; align-items:center; gap:6px; background:rgba(239,159,39,0.1); border:1px solid rgba(239,159,39,0.3); padding:4px 10px; border-radius:8px; font-size:11px; font-weight:700; color:#f1c40f; transition:all 0.15s; transform:scale(1);">
+
+      <div id="active-buffs" style="position:absolute; left:50%; transform:translateX(-50%); display:flex; gap:10px; font-size:20px; align-items:center; min-height:24px; z-index:1;"></div>
+      
+      <div id="combo-box" style="display:none; align-items:center; gap:6px; background:var(--surface2); border:1px solid rgba(239,159,39,0.3); padding:4px 10px; border-radius:8px; font-size:11px; font-weight:700; color:#f1c40f; transition:all 0.15s; transform:scale(1); z-index:5; margin-left:auto;">
         🔥 <span id="combo-val">2</span>x COMBO
         <div style="width:40px; height:4px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden;">
             <div id="combo-bar" style="width:100%; height:100%; background:#f1c40f; transition:width 0.1s linear;"></div>
@@ -1422,5 +1425,5 @@ cv.addEventListener('touchend',e=>{
 
 startBtn.addEventListener('click',()=>init());
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0cfa887e865b48e',t:'MTc4MTY3NDE4NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0cfb791dd19a60f',t:'MTc4MTY3NDgwMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
